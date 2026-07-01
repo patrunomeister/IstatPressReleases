@@ -25,8 +25,8 @@ COPYSCAPE_API_URL = "https://www.copyscape.com/api/"
 # ============================================================================
 # CONFIGURATION: Set your Copyscape Premium credentials here
 # ============================================================================
-COPYSCAPE_USERNAME = "your-copyscape-username"
-COPYSCAPE_API_KEY = "your-copyscape-api-key"
+COPYSCAPE_USERNAME = "vincpatruno2"
+COPYSCAPE_API_KEY = "63dvir4atdjc8qt1"
 # ============================================================================
 
 
