@@ -1,0 +1,3 @@
+https://www.istat.it/tag/prezzi-al-consumo/feed/
+https://www.istat.it/tag/produzione-industriale/feed/
+https://www.istat.it/tag/occupati-e-disoccupati/feed/
