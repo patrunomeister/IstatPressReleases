@@ -1,11 +1,47 @@
 import hashlib
 import csv
+import re
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 import xml.etree.ElementTree as ET
+
+
+FEED_PREFIX_MAP: dict[str, str] = {
+    "prezzi-al-consumo": "PRE",
+    "produzione-industriale": "PRO",
+    "occupati-e-disoccupati": "OCC",
+}
+
+TITLE_CODE_RULES: list[tuple[str, str]] = [
+    ("prezzi al consumo", "CON"),
+    ("produzione industriale", "IND"),
+    ("prezzi alla produzione dell'industria", "IND"),
+    ("prezzi alla produzione dell'industria e delle costruzioni", "IND"),
+    ("occupati e disoccupati", "DIS"),
+]
+
+MONTH_MAP: dict[str, str] = {
+    "gennaio": "GEN",
+    "febbraio": "FEB",
+    "marzo": "MAR",
+    "aprile": "APR",
+    "maggio": "MAG",
+    "giugno": "GIU",
+    "luglio": "LUG",
+    "agosto": "AGO",
+    "settembre": "SET",
+    "ottobre": "OTT",
+    "novembre": "NOV",
+    "dicembre": "DIC",
+}
+
+MONTH_YEAR_RE = re.compile(rf"\b({'|'.join(MONTH_MAP.keys())})\s+(\d{{4}})\b")
+HEADER_4_NEW = ["titolo", "codice", "id_hash", "link"]
+HEADER_4_OLD = ["titolo", "codice", "hashtag", "link"]
+HEADER_3_OLD = ["titolo", "hashtag", "link"]
 
 
 def read_feed_urls(file_path: Path) -> list[str]:
@@ -84,6 +120,41 @@ def parse_feed(feed_url: str) -> list[dict[str, str | datetime]]:
     return entries
 
 
+def extract_feed_slug(feed_url: str) -> str:
+    match = re.search(r"/tag/([^/]+)/feed/", feed_url)
+    if not match:
+        raise ValueError(f"URL feed non valido o non supportato: {feed_url}")
+    return match.group(1).strip().lower()
+
+
+def build_press_code(feed_url: str, title: str) -> str:
+    feed_slug = extract_feed_slug(feed_url)
+    feed_prefix = FEED_PREFIX_MAP.get(feed_slug)
+    if not feed_prefix:
+        raise ValueError(f"Feed non mappato: {feed_slug}")
+
+    lowered_title = title.lower().replace("’", "'").strip()
+
+    title_code = ""
+    for needle, code in TITLE_CODE_RULES:
+        if needle in lowered_title:
+            title_code = code
+            break
+    if not title_code:
+        raise ValueError(f"Titolo non classificabile: {title}")
+
+    provisional_code = "PRO" if "(dati provvisori)" in lowered_title else ""
+
+    month_match = MONTH_YEAR_RE.search(lowered_title)
+    if not month_match:
+        raise ValueError(f"Mese/anno non trovati nel titolo: {title}")
+
+    month_abbr = MONTH_MAP[month_match.group(1)]
+    year = month_match.group(2)
+
+    return f"{feed_prefix}{title_code}{provisional_code}{month_abbr}{year}"
+
+
 def main() -> None:
     feeds_file = Path(__file__).with_name("rss_feeds.txt")
     output_file = Path(__file__).with_name("rss_latest_hash_output.csv")
@@ -106,45 +177,44 @@ def main() -> None:
         latest = max(feed_entries, key=lambda entry: entry["published"])
         title = str(latest["title"])
         link = str(latest["link"])
-        title_hash = hashlib.sha256(title.encode("utf-8")).hexdigest()
-        rows_to_add.append([title, title_hash, link])
+        normalized_title_for_hash = "".join(title.strip().upper().split())
+        title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
+        try:
+            code = build_press_code(feed_url, title)
+        except ValueError as exc:
+            print(f"Classificazione non riuscita ({feed_url}): {exc}")
+            continue
+
+        rows_to_add.append([title, code, title_hash, link])
 
     if not rows_to_add:
         raise RuntimeError("Nessun elemento valido trovato nei feed RSS.")
 
-    existing_rows: set[tuple[str, str, str]] = set()
-    has_header = False
+    existing_rows: dict[str, tuple[str, str, str]] = {}
 
     if output_file.exists():
         with output_file.open("r", encoding="utf-8", newline="") as csvfile:
             reader = csv.reader(csvfile)
-            for index, row in enumerate(reader):
+            for row in reader:
                 if not row:
                     continue
 
-                if (
-                    index == 0
-                    and [col.strip().lower() for col in row[:3]]
-                    == ["titolo", "hashtag", "link"]
-                ):
-                    has_header = True
+                normalized = [col.strip().lower() for col in row[:4]]
+                normalized_3 = [col.strip().lower() for col in row[:3]]
+                if normalized in (HEADER_4_NEW, HEADER_4_OLD) or normalized_3 == HEADER_3_OLD:
                     continue
 
-                if len(row) >= 3:
-                    existing_rows.add((row[0], row[1], row[2]))
+                if len(row) >= 4:
+                    existing_rows[row[3]] = (row[0], row[1], row[2])
 
-    should_write_header = (not output_file.exists()) or (
-        output_file.exists() and output_file.stat().st_size == 0
-    )
+    for row_to_add in rows_to_add:
+        existing_rows[row_to_add[3]] = (row_to_add[0], row_to_add[1], row_to_add[2])
 
-    with output_file.open("a", encoding="utf-8", newline="") as csvfile:
+    with output_file.open("w", encoding="utf-8", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        if should_write_header and not has_header:
-            writer.writerow(["titolo", "hashtag", "link"])
-        for row_to_add in rows_to_add:
-            if tuple(row_to_add) in existing_rows:
-                continue
-            writer.writerow(row_to_add)
+        writer.writerow(["titolo", "codice", "id_hash", "link"])
+        for link, (title, code, id_hash) in sorted(existing_rows.items()):
+            writer.writerow([title, code, id_hash, link])
 
 
 if __name__ == "__main__":

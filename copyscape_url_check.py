@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Copyscape URL plagiarism check utility.
 
-This script reads query URLs (and related hashtags) from a CSV file,
+This script reads query URLs (and related id_hash values) from a CSV file,
 calls Copyscape for each URL one at a time, writes an aggregated results CSV,
 and writes a per-call log CSV.
 """
@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
         "--input",
         default="rss_latest_hash_output.csv",
         help=(
-            "Input CSV file with columns including hashtag and link "
+            "Input CSV file with columns including id_hash, codice and link "
             "(default: rss_latest_hash_output.csv)"
         ),
     )
@@ -64,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--ignore-sites",
-        default="facebook.com,instagram.com,threads.com,istat.it,x.com",
+        default="facebook.com,instagram.com,threads.com,istat.it,x.com,linkedin.com",
         help=(
             "Comma-separated domains to ignore "
             "(default: facebook.com,instagram.com)"
@@ -186,18 +186,20 @@ def read_input_links(input_file: Path) -> list[dict[str, str]]:
 
         normalized_map = {name.strip().lower(): name for name in reader.fieldnames}
         link_col = normalized_map.get("link") or normalized_map.get("url")
-        hashtag_col = normalized_map.get("hashtag")
+        id_hash_col = normalized_map.get("id_hash")
+        codice_col = normalized_map.get("codice")
 
-        if not link_col or not hashtag_col:
+        if not link_col or not id_hash_col:
             raise ValueError(
-                "Il file input deve contenere almeno le colonne 'link' e 'hashtag'."
+                "Il file input deve contenere almeno le colonne 'link' e 'id_hash'."
             )
 
         for row in reader:
             link = (row.get(link_col) or "").strip()
-            hashtag = (row.get(hashtag_col) or "").strip()
-            if link and hashtag:
-                links.append({"link": link, "hashtag": hashtag})
+            id_hash = (row.get(id_hash_col) or "").strip()
+            codice = (row.get(codice_col) or "").strip() if codice_col else ""
+            if link and id_hash:
+                links.append({"link": link, "id_hash": id_hash, "codice": codice})
 
     return links
 
@@ -210,7 +212,8 @@ def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> No
             [
                 "Index",
                 "data",
-                "hashtag",
+                "codice",
+                "id_hash",
                 "URL",
                 "Title",
                 "Min Words Matched",
@@ -226,7 +229,8 @@ def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> No
                 [
                     idx,
                     row["date"],
-                    row["hashtag"],
+                    row["codice"],
+                    row["id_hash"],
                     row["url"],
                     row["title"],
                     row["minwordsmatched"],
@@ -258,7 +262,8 @@ def save_call_log(rows: list[dict[str, Any]], log_file: Path) -> None:
 def run_for_single_url(
     base_params: dict[str, str],
     query_url: str,
-    hashtag: str,
+    id_hash: str,
+    codice: str,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     params = dict(base_params)
     params["q"] = query_url
@@ -273,7 +278,8 @@ def run_for_single_url(
                 "url": row.get("url", ""),
                 "query_url": query_url,
                 "date": call_date,
-                "hashtag": hashtag,
+                "id_hash": id_hash,
+                "codice": codice,
                 "title": row.get("title", ""),
                 "minwordsmatched": row.get("minwordsmatched", ""),
                 "percentmatched": row.get("percentmatched", ""),
@@ -319,7 +325,8 @@ def main() -> int:
             result_rows, log_row = run_for_single_url(
                 base_params=base_params,
                 query_url=item["link"],
-                hashtag=item["hashtag"],
+                id_hash=item["id_hash"],
+                codice=item.get("codice", ""),
             )
             all_result_rows.extend(result_rows)
             call_log_rows.append(log_row)

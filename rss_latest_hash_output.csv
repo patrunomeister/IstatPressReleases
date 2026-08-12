@@ -1,5 +1,4 @@
-titolo,hashtag,link
-Prezzi al consumo (dati provvisori) – Giugno 2026,a75aac8f720c3c79a8aaeac5e4bd76f976209c4b6ee68c234461f493526c5ff7,https://www.istat.it/comunicato-stampa/prezzi-al-consumo-dati-provvisori-giugno-2026/
-Produzione industriale – Aprile 2026,fb339c0b50012bca2d9005034f25a28c80e07da586810bdf8ddd4449d6d31e93,https://www.istat.it/comunicato-stampa/produzione-industriale-aprile-2026/
-Occupati e disoccupati (dati provvisori)- Maggio 2026,a71884eb555353fa7b1cf3a30d010865c038f2f708da92f19480f93521c77bbd,https://www.istat.it/comunicato-stampa/occupati-e-disoccupati-dati-provvisori-maggio-2026/
-Produzione industriale – Maggio 2026,e6ee2915f50a4cbeaacd426929f8f9e3041877c65a24d8d7f3440d991e8e3303,https://www.istat.it/comunicato-stampa/produzione-industriale-maggio-2026/
+titolo,codice,id_hash,link
+Occupati e disoccupati (dati provvisori)- Giugno 2026,OCCDISPROGIU2026,74be3b8beb34752637237ef85d70d850fddfd66b58247b637349562242eec3bf,https://www.istat.it/comunicato-stampa/occupati-e-disoccupati-dati-provvisori-giugno-2026/
+Prezzi al consumo (dati provvisori) – Luglio 2026,PRECONPROLUG2026,58ad50152255e17f721af3de8710f32291300deeccf656bcd048a0ceb6a2250e,https://www.istat.it/comunicato-stampa/prezzi-al-consumo-dati-provvisori-luglio-2026/
+Produzione industriale – Giugno 2026,PROINDGIU2026,65b76e7ddf7b7cca90f2a702f437c4f5e132ef190dee67f00c5cbb2f7972e993,https://www.istat.it/comunicato-stampa/produzione-industriale-giugno-2026/
