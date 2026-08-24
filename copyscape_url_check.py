@@ -244,9 +244,11 @@ def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> No
 
 def save_call_log(rows: list[dict[str, Any]], log_file: Path) -> None:
     log_file.parent.mkdir(parents=True, exist_ok=True)
-    with log_file.open("w", newline="", encoding="utf-8") as f:
+    write_header = not log_file.exists() or log_file.stat().st_size == 0
+    with log_file.open("a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["data", "query url", "totale risultati", "costo in USD", "query words"])
+        if write_header:
+            writer.writerow(["data", "query url", "totale risultati", "costo in USD", "query words"])
         for row in rows:
             writer.writerow(
                 [
