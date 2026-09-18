@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Copyscape URL plagiarism check utility.
+"""Copyscape text plagiarism check utility.
 
-This script reads query URLs (and related id_hash values) from a CSV file,
-calls Copyscape for each URL one at a time, writes an aggregated results CSV,
-and writes a per-call log CSV.
+This script reads the article rows (with the extracted "testo" column,
+plus "id_hash" and "codice") from a CSV file into a pandas DataFrame,
+calls Copyscape for each row's text one at a time, writes an aggregated
+results CSV, and writes a per-call log CSV.
 """
 
 from __future__ import annotations
@@ -18,7 +19,9 @@ from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
+
+import pandas as pd
 
 
 COPYSCAPE_API_URL = "https://www.copyscape.com/api/"
@@ -34,16 +37,16 @@ COPYSCAPE_API_KEY = "63dvir4atdjc8qt1"
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Read URLs from a CSV file, query Copyscape one URL at a time, "
-            "and export aggregated results + call log CSV files."
+            "Read article texts from a CSV file, query Copyscape one text at a "
+            "time, and export aggregated results + call log CSV files."
         )
     )
     parser.add_argument(
         "--input",
-        default="rss_latest_hash_output.csv",
+        default="get_print_reviews.csv",
         help=(
-            "Input CSV file with columns including id_hash, codice and link "
-            "(default: rss_latest_hash_output.csv)"
+            "Input CSV file with columns including id_hash, codice, link and "
+            "testo (default: get_print_reviews.csv)"
         ),
     )
     parser.add_argument(
@@ -127,13 +130,20 @@ def build_base_params(args: argparse.Namespace) -> dict[str, str]:
     return params
 
 
-def call_copyscape(params: dict[str, str]) -> dict[str, Any]:
-    query = urlencode(params)
-    request_url = f"{COPYSCAPE_API_URL}?{query}"
-
+def call_copyscape(params: dict[str, str], method: str = "POST") -> dict[str, Any]:
+    """Call the Copyscape API. Text searches require POST (the "t" text
+    parameter can exceed the length allowed in a GET query string)."""
     try:
-        with urlopen(request_url, timeout=60) as response:
-            body = response.read().decode("utf-8")
+        if method == "GET":
+            query = urlencode(params)
+            request_url = f"{COPYSCAPE_API_URL}?{query}"
+            with urlopen(request_url, timeout=60) as response:
+                body = response.read().decode("utf-8")
+        else:
+            data = urlencode(params).encode("utf-8")
+            request = Request(COPYSCAPE_API_URL, data=data, method="POST")
+            with urlopen(request, timeout=60) as response:
+                body = response.read().decode("utf-8")
     except HTTPError as exc:
         raise RuntimeError(f"HTTP error from Copyscape: {exc.code} {exc.reason}") from exc
     except URLError as exc:
@@ -174,34 +184,33 @@ def extract_result_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def read_input_links(input_file: Path) -> list[dict[str, str]]:
+def read_input_rows(input_file: Path) -> list[dict[str, str]]:
     if not input_file.exists():
         raise FileNotFoundError(f"Input file non trovato: {input_file}")
 
-    links: list[dict[str, str]] = []
-    with input_file.open("r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        if reader.fieldnames is None:
-            return links
+    df = pd.read_csv(input_file, dtype=str, keep_default_na=False)
 
-        normalized_map = {name.strip().lower(): name for name in reader.fieldnames}
-        link_col = normalized_map.get("link") or normalized_map.get("url")
-        id_hash_col = normalized_map.get("id_hash")
-        codice_col = normalized_map.get("codice")
+    normalized_map = {name.strip().lower(): name for name in df.columns}
+    link_col = normalized_map.get("link") or normalized_map.get("url")
+    id_hash_col = normalized_map.get("id_hash")
+    codice_col = normalized_map.get("codice")
+    testo_col = normalized_map.get("testo")
 
-        if not link_col or not id_hash_col:
-            raise ValueError(
-                "Il file input deve contenere almeno le colonne 'link' e 'id_hash'."
-            )
+    if not id_hash_col or not testo_col:
+        raise ValueError(
+            "Il file input deve contenere almeno le colonne 'id_hash' e 'testo'."
+        )
 
-        for row in reader:
-            link = (row.get(link_col) or "").strip()
-            id_hash = (row.get(id_hash_col) or "").strip()
-            codice = (row.get(codice_col) or "").strip() if codice_col else ""
-            if link and id_hash:
-                links.append({"link": link, "id_hash": id_hash, "codice": codice})
+    rows: list[dict[str, str]] = []
+    for _, record in df.iterrows():
+        testo = (record.get(testo_col, "") or "").strip()
+        id_hash = (record.get(id_hash_col, "") or "").strip()
+        link = (record.get(link_col, "") or "").strip() if link_col else ""
+        codice = (record.get(codice_col, "") or "").strip() if codice_col else ""
+        if testo and id_hash:
+            rows.append({"testo": testo, "link": link, "id_hash": id_hash, "codice": codice})
 
-    return links
+    return rows
 
 
 def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> None:
@@ -261,15 +270,17 @@ def save_call_log(rows: list[dict[str, Any]], log_file: Path) -> None:
             )
 
 
-def run_for_single_url(
+def run_for_single_text(
     base_params: dict[str, str],
-    query_url: str,
+    text: str,
+    link: str,
     id_hash: str,
     codice: str,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     params = dict(base_params)
-    params["q"] = query_url
-    payload = call_copyscape(params)
+    params["t"] = text
+    params["e"] = "UTF-8"
+    payload = call_copyscape(params, method="POST")
     call_date = datetime.now().isoformat()
 
     result_rows = extract_result_rows(payload)
@@ -278,7 +289,7 @@ def run_for_single_url(
         output_rows.append(
             {
                 "url": row.get("url", ""),
-                "query_url": query_url,
+                "query_url": link,
                 "date": call_date,
                 "id_hash": id_hash,
                 "codice": codice,
@@ -293,7 +304,7 @@ def run_for_single_url(
 
     log_row = {
         "date": call_date,
-        "query_url": query_url,
+        "query_url": link,
         "total_results": payload.get("count", len(result_rows)),
         "cost_usd": payload.get("cost", ""),
         "query_words": payload.get("querywords", ""),
@@ -307,7 +318,7 @@ def main() -> int:
 
     try:
         base_params = build_base_params(args)
-        input_rows = read_input_links(input_file)
+        input_rows = read_input_rows(input_file)
     except (ValueError, RuntimeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -316,7 +327,7 @@ def main() -> int:
         return 1
 
     if not input_rows:
-        print("Nessun link valido trovato nel file input.", file=sys.stderr)
+        print("Nessuna riga con testo valido trovata nel file input.", file=sys.stderr)
         return 1
 
     all_result_rows: list[dict[str, Any]] = []
@@ -324,20 +335,21 @@ def main() -> int:
 
     for item in input_rows:
         try:
-            result_rows, log_row = run_for_single_url(
+            result_rows, log_row = run_for_single_text(
                 base_params=base_params,
-                query_url=item["link"],
+                text=item["testo"],
+                link=item.get("link", ""),
                 id_hash=item["id_hash"],
                 codice=item.get("codice", ""),
             )
             all_result_rows.extend(result_rows)
             call_log_rows.append(log_row)
         except RuntimeError as exc:
-            print(f"Errore su URL {item['link']}: {exc}", file=sys.stderr)
+            print(f"Errore su id_hash {item['id_hash']}: {exc}", file=sys.stderr)
             call_log_rows.append(
                 {
                     "date": datetime.now().isoformat(),
-                    "query_url": item["link"],
+                    "query_url": item.get("link", ""),
                     "total_results": "ERROR",
                     "cost_usd": "",
                     "query_words": "",
@@ -361,13 +373,13 @@ def main() -> int:
         print(f"Error saving CSV: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Input URLs processed: {len(input_rows)}")
+    print(f"Input rows processed: {len(input_rows)}")
     print(f"Total result rows written: {len(all_result_rows)}")
     print(f"Results saved to: {output_path.resolve()}")
     print(f"Log saved to: {log_path.resolve()}")
 
     if args.raw_json:
-        print("\n--raw-json e disponibile solo in modalita URL singolo (non usata qui).")
+        print("\n--raw-json e disponibile solo in modalita testo singolo (non usata qui).")
 
     return 0
 
