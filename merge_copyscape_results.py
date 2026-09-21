@@ -4,6 +4,12 @@
 By default, this script reads all files matching `copyscape_results_*.csv`
 in the current folder, appends their rows, and writes `output_cumulativo.csv`.
 
+Per evitare duplicati quando lo script copyscape_check.py viene eseguito piu'
+volte nello stesso giorno per lo stesso articolo, le righe con lo stesso
+`id_hash`, la stessa data (giorno/mese/anno nel campo "data") e lo stesso
+`URL` vengono scartate dopo la prima occorrenza incontrata (i file vengono
+elaborati in ordine di nome, quindi in ordine cronologico).
+
 It also normalizes legacy files that used `hashtag` instead of `id_hash`.
 """
 
@@ -11,7 +17,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 from pathlib import Path
+
+DAY_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
 
 OUTPUT_HEADER = [
@@ -104,7 +113,13 @@ def read_rows_from_file(file_path: Path) -> list[list[str]]:
     return rows
 
 
-def merge_files(input_glob: str, output_path: Path) -> tuple[int, int]:
+def extract_day_key(data_value: str) -> str:
+    """Return the day/month/year portion (YYYY-MM-DD) of a "data" value."""
+    match = DAY_RE.match(data_value.strip())
+    return match.group(1) if match else data_value.strip()
+
+
+def merge_files(input_glob: str, output_path: Path) -> tuple[int, int, int]:
     base_dir = Path.cwd()
     input_files = sorted(base_dir.glob(input_glob))
 
@@ -114,8 +129,23 @@ def merge_files(input_glob: str, output_path: Path) -> tuple[int, int]:
         )
 
     merged_rows: list[list[str]] = []
+    seen_id_hash_day_url: set[tuple[str, str, str]] = set()
+    skipped_duplicates = 0
     for input_file in input_files:
-        merged_rows.extend(read_rows_from_file(input_file))
+        for row in read_rows_from_file(input_file):
+            id_hash = row[2]
+            url = row[3]
+            day_key = extract_day_key(row[0])
+            if id_hash and day_key and url:
+                key = (id_hash, day_key, url)
+                if key in seen_id_hash_day_url:
+                    # Stesso articolo (id_hash) con lo stesso URL gia'
+                    # presente nel cumulativo con la stessa data
+                    # (giorno/mese/anno): non aggiungere.
+                    skipped_duplicates += 1
+                    continue
+                seen_id_hash_day_url.add(key)
+            merged_rows.append(row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as f:
@@ -124,7 +154,7 @@ def merge_files(input_glob: str, output_path: Path) -> tuple[int, int]:
         for idx, row in enumerate(merged_rows, start=1):
             writer.writerow([idx, *row])
 
-    return len(input_files), len(merged_rows)
+    return len(input_files), len(merged_rows), skipped_duplicates
 
 
 def main() -> int:
@@ -132,7 +162,7 @@ def main() -> int:
     output_path = Path(args.output)
 
     try:
-        files_count, rows_count = merge_files(args.input_glob, output_path)
+        files_count, rows_count, skipped_count = merge_files(args.input_glob, output_path)
     except FileNotFoundError as exc:
         print(exc)
         return 1
@@ -142,6 +172,10 @@ def main() -> int:
 
     print(f"File processati: {files_count}")
     print(f"Righe scritte: {rows_count}")
+    print(
+        "Righe duplicate scartate (stesso id_hash, stessa data e stesso URL): "
+        f"{skipped_count}"
+    )
     print(f"Output: {output_path.resolve()}")
     return 0
 
