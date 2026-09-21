@@ -34,3 +34,7 @@ data,query url,totale risultati,costo in USD,query words
 2026-09-18T16:59:34.024416,https://www.istat.it/comunicato-stampa/prezzi-al-consumo-luglio-2026/,52,0.06,502
 2026-09-18T16:59:35.619113,https://www.istat.it/comunicato-stampa/produzione-industriale-giugno-2026/,34,0.05,330
 >>>>>>> agents/python-script-get-print-reviews
+2026-09-21T15:38:55.734905,https://www.istat.it/comunicato-stampa/occupati-e-disoccupati-dati-provvisori-giugno-2026/,26,0.05,395
+2026-09-21T15:38:58.050273,https://www.istat.it/comunicato-stampa/prezzi-al-consumo-dati-provvisori-luglio-2026/,56,0.06,451
+2026-09-21T15:39:00.652461,https://www.istat.it/comunicato-stampa/prezzi-al-consumo-luglio-2026/,49,0.06,502
+2026-09-21T15:39:02.884467,https://www.istat.it/comunicato-stampa/produzione-industriale-giugno-2026/,33,0.05,330
