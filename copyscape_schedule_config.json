@@ -1,0 +1,16 @@
+{
+  "_readme": [
+    "Configurazione dello scheduler dei controlli Copyscape (copyscape_scheduler.py).",
+    "'default_offsets_days': elenco di offset (in giorni dalla prima analisi/registrazione",
+    "  del comunicato) a cui va eseguito un controllo Copyscape. Esempio [1, 7, 30] = un",
+    "  controllo dopo 1 giorno, uno dopo una settimana e uno dopo un mese.",
+    "'overrides': permette di impostare un piano diverso per uno specifico comunicato,",
+    "  usando come chiave il suo campo 'codice' per intero (es. 'PROINDGIU2026', non solo",
+    "  i primi tre caratteri) oppure il suo 'id_hash'.",
+    "'max_attempts': numero massimo di tentativi per un controllo schedulato in caso di",
+    "  errore nella chiamata a Copyscape, prima di segnarlo come definitivamente fallito."
+  ],
+  "default_offsets_days": [1, 7, 30],
+  "overrides": {},
+  "max_attempts": 3
+}

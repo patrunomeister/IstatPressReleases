@@ -39,9 +39,11 @@ MONTH_MAP: dict[str, str] = {
 }
 
 MONTH_YEAR_RE = re.compile(rf"\b({'|'.join(MONTH_MAP.keys())})\s+(\d{{4}})\b")
+HEADER_5_NEW = ["data", "titolo", "codice", "id_hash", "link"]
 HEADER_4_NEW = ["titolo", "codice", "id_hash", "link"]
 HEADER_4_OLD = ["titolo", "codice", "hashtag", "link"]
 HEADER_3_OLD = ["titolo", "hashtag", "link"]
+KNOWN_HEADERS = (HEADER_5_NEW, HEADER_4_NEW, HEADER_4_OLD, HEADER_3_OLD)
 
 
 def read_feed_urls(file_path: Path) -> list[str]:
@@ -177,6 +179,12 @@ def main() -> None:
         latest = max(feed_entries, key=lambda entry: entry["published"])
         title = str(latest["title"])
         link = str(latest["link"])
+        published = latest["published"]
+        assert isinstance(published, datetime)
+        data_str = (
+            "" if published == datetime.min.replace(tzinfo=timezone.utc)
+            else published.strftime("%Y-%m-%d")
+        )
         normalized_title_for_hash = "".join(title.strip().upper().split())
         title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
         try:
@@ -185,36 +193,44 @@ def main() -> None:
             print(f"Classificazione non riuscita ({feed_url}): {exc}")
             continue
 
-        rows_to_add.append([title, code, title_hash, link])
+        rows_to_add.append([data_str, title, code, title_hash, link])
 
     if not rows_to_add:
         raise RuntimeError("Nessun elemento valido trovato nei feed RSS.")
 
-    existing_rows: dict[str, tuple[str, str, str]] = {}
+    # existing_rows: link -> (data, titolo, codice, id_hash)
+    existing_rows: dict[str, tuple[str, str, str, str]] = {}
 
     if output_file.exists():
         with output_file.open("r", encoding="utf-8", newline="") as csvfile:
             reader = csv.reader(csvfile)
-            for row in reader:
-                if not row:
-                    continue
+            rows = [row for row in reader if row]
 
-                normalized = [col.strip().lower() for col in row[:4]]
-                normalized_3 = [col.strip().lower() for col in row[:3]]
-                if normalized in (HEADER_4_NEW, HEADER_4_OLD) or normalized_3 == HEADER_3_OLD:
-                    continue
+        if rows:
+            header_normalized = [col.strip().lower() for col in rows[0]]
+            is_new_5_header = header_normalized == HEADER_5_NEW
+            data_rows = rows[1:] if header_normalized in KNOWN_HEADERS else rows
 
-                if len(row) >= 4:
-                    existing_rows[row[3]] = (row[0], row[1], row[2])
+            for row in data_rows:
+                if is_new_5_header and len(row) >= 5:
+                    # Formato aggiornato: data, titolo, codice, id_hash, link
+                    date_value, title_value, code_value, id_hash_value, link_value = row[:5]
+                    existing_rows[link_value] = (date_value, title_value, code_value, id_hash_value)
+                elif len(row) >= 4:
+                    # Formato legacy (senza colonna "data"): titolo, codice,
+                    # id_hash, link. La data di rilascio non e' nota per
+                    # queste righe: viene lasciata vuota.
+                    title_value, code_value, id_hash_value, link_value = row[:4]
+                    existing_rows[link_value] = ("", title_value, code_value, id_hash_value)
 
-    for row_to_add in rows_to_add:
-        existing_rows[row_to_add[3]] = (row_to_add[0], row_to_add[1], row_to_add[2])
+    for data_value, title_value, code_value, id_hash_value, link_value in rows_to_add:
+        existing_rows[link_value] = (data_value, title_value, code_value, id_hash_value)
 
     with output_file.open("w", encoding="utf-8", newline="") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(["titolo", "codice", "id_hash", "link"])
-        for link, (title, code, id_hash) in sorted(existing_rows.items()):
-            writer.writerow([title, code, id_hash, link])
+        writer.writerow(HEADER_5_NEW)
+        for link_value, (date_value, title_value, code_value, id_hash_value) in sorted(existing_rows.items()):
+            writer.writerow([date_value, title_value, code_value, id_hash_value, link_value])
 
 
 if __name__ == "__main__":
