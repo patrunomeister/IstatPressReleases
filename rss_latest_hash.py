@@ -176,24 +176,27 @@ def main() -> None:
         if not feed_entries:
             continue
 
-        latest = max(feed_entries, key=lambda entry: entry["published"])
-        title = str(latest["title"])
-        link = str(latest["link"])
-        published = latest["published"]
-        assert isinstance(published, datetime)
-        data_str = (
-            "" if published == datetime.min.replace(tzinfo=timezone.utc)
-            else published.strftime("%Y-%m-%d")
-        )
-        normalized_title_for_hash = "".join(title.strip().upper().split())
-        title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
-        try:
-            code = build_press_code(feed_url, title)
-        except ValueError as exc:
-            print(f"Classificazione non riuscita ({feed_url}): {exc}")
-            continue
+        # Vengono elaborati tutti gli elementi del feed (non solo il piu'
+        # recente), cosi' da non perdere comunicati pubblicati tra
+        # un'esecuzione e l'altra dello script.
+        for entry in feed_entries:
+            title = str(entry["title"])
+            link = str(entry["link"])
+            published = entry["published"]
+            assert isinstance(published, datetime)
+            data_str = (
+                "" if published == datetime.min.replace(tzinfo=timezone.utc)
+                else published.strftime("%Y-%m-%d")
+            )
+            normalized_title_for_hash = "".join(title.strip().upper().split())
+            title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
+            try:
+                code = build_press_code(feed_url, title)
+            except ValueError as exc:
+                print(f"Classificazione non riuscita ({feed_url}): {exc}")
+                continue
 
-        rows_to_add.append([data_str, title, code, title_hash, link])
+            rows_to_add.append([data_str, title, code, title_hash, link])
 
     if not rows_to_add:
         raise RuntimeError("Nessun elemento valido trovato nei feed RSS.")
@@ -224,12 +227,30 @@ def main() -> None:
                     existing_rows[link_value] = ("", title_value, code_value, id_hash_value)
 
     for data_value, title_value, code_value, id_hash_value, link_value in rows_to_add:
+        if link_value in existing_rows:
+            # Elemento gia' presente nel file di output: non viene
+            # re-inserito ne' sovrascritto.
+            continue
         existing_rows[link_value] = (data_value, title_value, code_value, id_hash_value)
+
+    def sort_date_key(date_str: str) -> datetime:
+        if not date_str:
+            return datetime.min
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return datetime.min
+
+    # Ordina il file di output per data dalla piu' recente alla piu' remota
+    # (le righe con data sconosciuta vengono messe in fondo). A parita' di
+    # data l'ordine e' per link, grazie alla stabilita' dell'ordinamento.
+    sorted_items = sorted(existing_rows.items())
+    sorted_items.sort(key=lambda item: sort_date_key(item[1][0]), reverse=True)
 
     with output_file.open("w", encoding="utf-8", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER_5_NEW)
-        for link_value, (date_value, title_value, code_value, id_hash_value) in sorted(existing_rows.items()):
+        for link_value, (date_value, title_value, code_value, id_hash_value) in sorted_items:
             writer.writerow([date_value, title_value, code_value, id_hash_value, link_value])
 
 

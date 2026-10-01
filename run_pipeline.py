@@ -25,6 +25,13 @@ Per passare argomenti extra a un singolo step (ad es. forzare i controlli
 Copyscape ignorando la pianificazione), usare i relativi flag CLI:
 
     python run_pipeline.py --scheduler-args "--ignore-schedule --example-test"
+
+Per limitare i controlli Copyscape (step 3) solo ai comunicati elencati in
+un file di filtro (un link per riga, con eventuale riga di intestazione
+"link"), usare l'opzione --filter. Se omessa, vengono monitorati tutti i
+comunicati presenti in get_print_reviews.csv:
+
+    python run_pipeline.py --filter filter.txt
 """
 
 from __future__ import annotations
@@ -66,6 +73,16 @@ def parse_args() -> argparse.Namespace:
         help="Argomenti extra da passare a copyscape_scheduler.py (tra virgolette)",
     )
     parser.add_argument(
+        "--filter",
+        default=None,
+        help=(
+            "Percorso di un file di testo con un link per riga (es. "
+            "filter.txt) da passare a copyscape_scheduler.py per limitare i "
+            "controlli Copyscape solo a quei comunicati. Se omesso, vengono "
+            "processati tutti i comunicati presenti in get_print_reviews.csv."
+        ),
+    )
+    parser.add_argument(
         "--continue-on-error",
         action="store_true",
         help=(
@@ -92,6 +109,8 @@ def main() -> int:
     args = parse_args()
     skip_set = {s.strip() for s in args.skip.split(",") if s.strip()}
     scheduler_extra_args = shlex.split(args.scheduler_args) if args.scheduler_args else []
+    if args.filter:
+        scheduler_extra_args = [*scheduler_extra_args, "--filter", args.filter]
 
     failures: list[str] = []
     for name, script in STEPS:

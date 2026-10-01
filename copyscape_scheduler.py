@@ -61,22 +61,34 @@ Per forzare l'esecuzione immediata di tutti i controlli pianificati,
 indipendentemente dalla data prevista (utile per test):
 
     python copyscape_scheduler.py --ignore-schedule --example-test
+
+Filtro dei comunicati da monitorare (--filter):
+
+Non tutti i comunicati presenti in `get_print_reviews.csv` devono
+necessariamente essere analizzati su Copyscape. Passando l'opzione
+`--filter filter.txt` (un file di testo con un link per riga, con
+un'eventuale riga di intestazione "link"), lo scheduler registra ed esegue
+i controlli solo per i comunicati il cui link e' presente in quel file; gli
+altri vengono ignorati. Se l'opzione non viene passata, vengono monitorati
+tutti i comunicati presenti nell'input (comportamento di default).
+
+    python copyscape_scheduler.py --filter filter.txt
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
-from copyscape_check import (
+from copyscape_common import (
+    add_credential_args,
+    add_request_args,
     build_base_params,
+    read_press_release_rows,
     run_for_single_text,
     save_aggregated_results,
     save_call_log,
@@ -91,13 +103,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "overrides": {},
     "max_attempts": 3,
 }
-
-# ============================================================================
-# CONFIGURATION: Copyscape credentials (allineate a copyscape_check.py)
-# ============================================================================
-COPYSCAPE_USERNAME = "vincpatruno2"
-COPYSCAPE_API_KEY = "63dvir4atdjc8qt1"
-# ============================================================================
 
 
 def parse_args() -> argparse.Namespace:
@@ -126,38 +131,8 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_STATE_FILE,
         help=f"File di stato dello scheduler (default: {DEFAULT_STATE_FILE})",
     )
-    parser.add_argument(
-        "--username",
-        default=os.getenv("COPYSCAPE_USERNAME") or COPYSCAPE_USERNAME,
-        help="Copyscape username (env: COPYSCAPE_USERNAME, o modifica le costanti nello script)",
-    )
-    parser.add_argument(
-        "--api-key",
-        default=os.getenv("COPYSCAPE_API_KEY") or COPYSCAPE_API_KEY,
-        help="Copyscape API key (env: COPYSCAPE_API_KEY, o modifica le costanti nello script)",
-    )
-    parser.add_argument(
-        "--full-comparisons",
-        type=int,
-        default=0,
-        help="Numero di confronti completi da richiedere (0-10, default: 0)",
-    )
-    parser.add_argument(
-        "--ignore-sites",
-        default="facebook.com,instagram.com,threads.com,istat.it,x.com,linkedin.com",
-        help="Domini da ignorare, separati da virgola",
-    )
-    parser.add_argument(
-        "--spend-limit",
-        type=float,
-        default=None,
-        help="Limite di spesa opzionale per questa esecuzione (in dollari)",
-    )
-    parser.add_argument(
-        "--example-test",
-        action="store_true",
-        help="Esegue una ricerca di test Copyscape (x=1, non addebitata)",
-    )
+    add_credential_args(parser)
+    add_request_args(parser)
     parser.add_argument(
         "--output",
         default=None,
@@ -185,6 +160,16 @@ def parse_args() -> argparse.Namespace:
             "scadenza in questa esecuzione."
         ),
     )
+    parser.add_argument(
+        "--filter",
+        default=None,
+        help=(
+            "Percorso di un file di testo con un link per riga (es. filter.txt) "
+            "che restringe i comunicati da monitorare a quelli presenti nel "
+            "file. Se omesso, vengono monitorati tutti i comunicati presenti "
+            "nell'input."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -208,6 +193,23 @@ def load_config(config_file: Path) -> dict[str, Any]:
     merged = dict(DEFAULT_CONFIG)
     merged.update(config)
     return merged
+
+
+def load_filter_links(filter_file: Path) -> set[str]:
+    """Legge un file di filtro (un link per riga, con eventuale riga di
+    intestazione "link") e restituisce l'insieme dei link da monitorare.
+    Righe vuote e l'intestazione (case-insensitive) vengono ignorate."""
+    if not filter_file.exists():
+        raise FileNotFoundError(f"File di filtro non trovato: {filter_file}")
+
+    links: set[str] = set()
+    with filter_file.open("r", encoding="utf-8-sig") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.lower() == "link":
+                continue
+            links.add(stripped)
+    return links
 
 
 def resolve_offsets(codice: str, id_hash: str, config: dict[str, Any]) -> list[int]:
@@ -260,47 +262,6 @@ def build_checks(offsets_days: list[int], base_date: date) -> list[dict[str, Any
     return checks
 
 
-# ============================================================================
-# Lettura dei comunicati da monitorare
-# ============================================================================
-def read_press_releases(input_file: Path) -> list[dict[str, str]]:
-    if not input_file.exists():
-        raise FileNotFoundError(f"Input file non trovato: {input_file}")
-
-    df = pd.read_csv(input_file, dtype=str, keep_default_na=False)
-    normalized_map = {name.strip().lower(): name for name in df.columns}
-
-    id_hash_col = normalized_map.get("id_hash")
-    testo_col = normalized_map.get("testo")
-    codice_col = normalized_map.get("codice")
-    link_col = normalized_map.get("link") or normalized_map.get("url")
-    titolo_col = normalized_map.get("titolo") or normalized_map.get("title")
-    data_col = normalized_map.get("data")
-
-    if not id_hash_col or not testo_col:
-        raise ValueError(
-            "Il file input deve contenere almeno le colonne 'id_hash' e 'testo'."
-        )
-
-    rows: list[dict[str, str]] = []
-    for _, record in df.iterrows():
-        id_hash = (record.get(id_hash_col, "") or "").strip()
-        testo = (record.get(testo_col, "") or "").strip()
-        if not id_hash or not testo:
-            continue
-        rows.append(
-            {
-                "id_hash": id_hash,
-                "testo": testo,
-                "codice": (record.get(codice_col, "") or "").strip() if codice_col else "",
-                "link": (record.get(link_col, "") or "").strip() if link_col else "",
-                "titolo": (record.get(titolo_col, "") or "").strip() if titolo_col else "",
-                "data": (record.get(data_col, "") or "").strip() if data_col else "",
-            }
-        )
-    return rows
-
-
 def parse_release_date(data_str: str, fallback: date) -> date:
     """Interpreta il campo 'data' (data di rilascio del comunicato, formato
     atteso AAAA-MM-GG) restituendo la data da usare come base per il calcolo
@@ -322,10 +283,13 @@ def register_new_press_releases(
     state: dict[str, Any],
     config: dict[str, Any],
     today: date,
+    allowed_links: set[str] | None = None,
 ) -> int:
     """Aggiunge al file di stato i comunicati non ancora monitorati,
-    calcolando il loro piano di controlli. Restituisce il numero di nuove
-    registrazioni."""
+    calcolando il loro piano di controlli. Se 'allowed_links' e' fornito
+    (non None), vengono registrati solo i comunicati il cui link e'
+    contenuto in tale insieme (filtro da filter.txt); altrimenti vengono
+    registrati tutti. Restituisce il numero di nuove registrazioni."""
     newly_registered = 0
     for item in press_releases:
         id_hash = item["id_hash"]
@@ -337,6 +301,10 @@ def register_new_press_releases(
             for field in ("codice", "link", "titolo", "data"):
                 if not entry.get(field) and item.get(field):
                     entry[field] = item[field]
+            continue
+
+        if allowed_links is not None and item.get("link", "") not in allowed_links:
+            # Comunicato escluso dal filtro: non viene monitorato.
             continue
 
         offsets = resolve_offsets(item["codice"], id_hash, config)
@@ -366,11 +334,16 @@ def find_due_checks(
     today: date,
     max_attempts: int,
     ignore_schedule: bool,
+    allowed_links: set[str] | None = None,
 ) -> list[tuple[str, dict[str, Any]]]:
     """Restituisce la lista di (id_hash, check) per i controlli pianificati
-    che vanno eseguiti in questa esecuzione."""
+    che vanno eseguiti in questa esecuzione. Se 'allowed_links' e' fornito
+    (non None), vengono considerati solo i comunicati il cui link e'
+    presente in tale insieme (filtro da filter.txt)."""
     due: list[tuple[str, dict[str, Any]]] = []
     for id_hash, entry in state.items():
+        if allowed_links is not None and entry.get("link", "") not in allowed_links:
+            continue
         for check in entry.get("checks", []):
             if check["status"] not in ("pending", "error"):
                 continue
@@ -380,6 +353,7 @@ def find_due_checks(
             if ignore_schedule or due_date <= today:
                 due.append((id_hash, check))
     return due
+
 
 
 def execute_due_checks(
@@ -436,7 +410,12 @@ def main() -> int:
 
     try:
         config = load_config(config_file)
-        press_releases = read_press_releases(input_file)
+        press_releases = read_press_release_rows(input_file)
+        allowed_links: set[str] | None = None
+        if args.filter:
+            filter_file = Path(args.filter)
+            allowed_links = load_filter_links(filter_file)
+            print(f"Filtro attivo ({filter_file}): {len(allowed_links)} link ammessi")
     except (ValueError, FileNotFoundError) as exc:
         print(f"Errore: {exc}", file=sys.stderr)
         return 1
@@ -444,10 +423,16 @@ def main() -> int:
     state = load_state(state_file)
     max_attempts = int(config.get("max_attempts", DEFAULT_CONFIG["max_attempts"]))
 
-    newly_registered = register_new_press_releases(press_releases, state, config, today)
+    newly_registered = register_new_press_releases(
+        press_releases, state, config, today, allowed_links=allowed_links
+    )
 
     due_checks = find_due_checks(
-        state, today, max_attempts=max_attempts, ignore_schedule=args.ignore_schedule
+        state,
+        today,
+        max_attempts=max_attempts,
+        ignore_schedule=args.ignore_schedule,
+        allowed_links=allowed_links,
     )
 
     print(f"Comunicati letti da {input_file}: {len(press_releases)}")
