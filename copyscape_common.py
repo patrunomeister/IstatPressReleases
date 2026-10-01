@@ -28,8 +28,8 @@ COPYSCAPE_API_URL = "https://www.copyscape.com/api/"
 # ============================================================================
 # CONFIGURATION: Copyscape Premium credentials di default
 # ============================================================================
-DEFAULT_COPYSCAPE_USERNAME = "vincpatruno2"
-DEFAULT_COPYSCAPE_API_KEY = "63dvir4atdjc8qt1"
+DEFAULT_COPYSCAPE_USERNAME = ""
+DEFAULT_COPYSCAPE_API_KEY = ""
 # ============================================================================
 
 DEFAULT_IGNORE_SITES = "facebook.com,instagram.com,threads.com,istat.it,x.com,linkedin.com"
