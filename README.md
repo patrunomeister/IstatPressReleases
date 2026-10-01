@@ -61,17 +61,21 @@ servizio persistente, non va rischedulata ad ogni esecuzione.
 - Python 3.10+
 - Account Copyscape Premium (username e API key)
 
-Pacchetti necessari per gli script della pipeline (RSS, estrazione testo,
-Copyscape, merge, SQLite):
+Il file [`requirements.txt`](requirements.txt) nella root installa tutte le
+dipendenze necessarie all'intera pipeline (RSS, estrazione testo,
+Copyscape, merge, SQLite) **e** alla REST API:
 
 ```powershell
-pip install pandas requests beautifulsoup4
+pip install -r requirements.txt
 ```
 
-Pacchetti necessari per la REST API (si veda [`requirements.txt`](requirements.txt)
-nella root, identico a [`api/requirements.txt`](api/requirements.txt)):
+Se invece si vuole distribuire/eseguire solo la REST API separatamente
+dal resto della pipeline, e' disponibile anche
+[`api/requirements.txt`](api/requirements.txt) (identico ma limitato alle
+sole dipendenze di FastAPI/uvicorn/pydantic):
 
 ```powershell
+cd api
 pip install -r requirements.txt
 ```
 
