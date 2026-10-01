@@ -1,0 +1,116 @@
+{
+  "35d82a0d0255b74e35f8f4eddd8b73bc7693cfb2d979d332afe3855004093588": {
+    "id_hash": "35d82a0d0255b74e35f8f4eddd8b73bc7693cfb2d979d332afe3855004093588",
+    "codice": "PRECONAGO2026",
+    "titolo": "Prezzi al consumo – Agosto 2026",
+    "link": "https://www.istat.it/comunicato-stampa/prezzi-al-consumo-agosto-2026/",
+    "testo": "Nel mese di agosto 2026 l’indice nazionale dei prezzi al consumo per l’intera collettività (NIC), al lordo dei tabacchi, registra una variazione del +0,5% su base mensile e del +3,3% su base annua (da +2,9% di luglio), confermando la stima preliminare.\nL’aumento dell’inflazione riflette principalmente l’andamento dei prezzi degli Energetici, regolamentati (da +14,8% a +18,6%) e, soprattutto, non regolamentati (da +11,4% a +17,0%), dei Beni durevoli (da +0,7% a +1,3%) e, in misura più lieve, degli Alimentari non lavorati (da +3,6% a +3,8%); di contro, decelera la crescita dei prezzi dei Servizi ricreativi, culturali e per la cura della persona (da +3,0% a +2,6%) e quella dei Servizi relativi ai trasporti (da +1,6% a +0,8%).\nNel mese di agosto l’“inflazione di fondo”, calcolata al netto degli energetici e degli alimentari freschi, si riduce lievemente (da +1,6% a +1,5%), così come quella al netto dei soli beni energetici (da +1,8% a +1,7%).\nNel settore dei beni i prezzi evidenziano un’accelerazione del loro ritmo di crescita (da +3,2% a +4,1%), a cui si contrappone il rallentamento di quello dei prezzi dei servizi (da +2,7% a +2,4%). Si amplia il differenziale tra il comparto dei servizi e quello dei beni, che passa da -0,5 a -1,7 punti percentuali.\nLa variazione tendenziale dei prezzi dei Beni alimentari, per la cura della casa e della persona si riduce (da +1,0% a +0,9%), mentre quella dei prodotti ad alta frequenza d’acquisto aumenta (da +3,4% a +4,3%).\nLa variazione congiunturale dell’indice generale riflette soprattutto l’aumento dei prezzi degli Energetici regolamentati (+3,0%) e non regolamentati (+2,9%), dei Servizi relativi ai trasporti (+1,3%) e dei Beni durevoli (+0,5%).\nL’inflazione media del 2026 acquisita ad agosto è pari a +2,9% per l’indice generale e a +1,9% per la componente di fondo.\nL’indice armonizzato dei prezzi al consumo (IPCA) registra una variazione pari a +0,1% su base mensile, a causa dei saldi estivi di cui il NIC non tiene conto, e a +3,2% su base annua (da +2,9% del mese precedente), confermando la stima preliminare.\nL’indice nazionale dei prezzi al consumo per le famiglie di operai e impiegati (FOI), al netto dei tabacchi, registra una variazione congiunturale pari a +0,6% e una tendenziale di +3,4%.\nIl commento\nAd agosto 2026 l’inflazione sale a +3,3% (da +2,9% di luglio), sostenuta dall’andamento dei prezzi dei beni energetici (da +11,6% a +17,1%). Nel settore alimentare la dinamica dei prezzi continua a essere moderata (attestandosi a +1,0%), esercitando un freno alla crescita dell’indice generale. La crescita dei prezzi rallenta anche per alcune tipologie di servizi, tra cui i servizi ricreativi, culturali e per la cura della persona e quelli relativi ai trasporti. Il cosiddetto “carrello della spesa” diminuisce lievemente (da +1,0% a +0,9%), come anche l’inflazione di fondo (da +1,6% a +1,5%). L’inflazione media del 2026, acquisita ad agosto sale a +2,9%.",
+    "data": "2026-09-16",
+    "release_date": "2026-09-16",
+    "first_seen": "2026-10-01",
+    "offsets_days": [
+      1,
+      7,
+      30
+    ],
+    "checks": [
+      {
+        "offset_days": 1,
+        "due_date": "2026-09-17",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:15.745750"
+      },
+      {
+        "offset_days": 7,
+        "due_date": "2026-09-23",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:16.794463"
+      },
+      {
+        "offset_days": 30,
+        "due_date": "2026-10-16",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      }
+    ]
+  },
+  "27c192767b0bd121e01a6fcadc0e4e97b108d9f0368029cee98b49474395853a": {
+    "id_hash": "27c192767b0bd121e01a6fcadc0e4e97b108d9f0368029cee98b49474395853a",
+    "codice": "PROINDLUG2026",
+    "titolo": "Produzione industriale – Luglio 2026",
+    "link": "https://www.istat.it/comunicato-stampa/produzione-industriale-luglio-2026/",
+    "testo": "A luglio 2026 si stima che l’indice destagionalizzato della produzione industriale aumenti dello 0,7% rispetto a giugno. Nella media del periodo maggio-luglio si registra una diminuzione del livello della produzione dello 0,1% rispetto ai tre mesi precedenti.\nL’indice destagionalizzato mostra a luglio un calo congiunturale solo per l’energia (-0,9%); viceversa si osservano aumenti per i beni di consumo (+2,1%), i beni intermedi (+0,5%) e i beni strumentali (+0,2%).\nAl netto degli effetti di calendario, a luglio 2026 la produzione è rimasta invariata rispetto all’anno precedente (i giorni lavorativi di calendario sono stati 23 come a luglio 2025). Si registra un incremento solo per l’energia (+6,4%); variazioni negative si osservano invece, per beni strumentali (-0,1%), i beni intermedi (-0,8%) e i beni di consumo (-1,2%).\nI settori di attività economica che registrano gli incrementi tendenziali più elevati sono la fornitura di energia elettrica, gas, vapore ed aria (+7,6%), la produzione di prodotti farmaceutici di base e preparati farmaceutici (+7,4%) e la fabbricazione di computer, prodotti di elettronica e ottica, apparecchi elettromedicali, apparecchi di misurazione (+2,4%). Le flessioni più ampie si rilevano nelle altre industrie manifatturiere, riparazione e installazione di macchine ed apparecchiature (-4,6%), nella fabbricazione di prodotti chimici (-3,4%) e nella fabbricazione di apparecchiature elettriche e apparecchiature per uso domestico non elettriche (-2,8%).\nIl commento\nA luglio la produzione industriale destagionalizzata registra un incremento congiunturale. Si rileva una dinamica mensile positiva per tutti i raggruppamenti di industrie ad eccezione dell’energia. Risulta, tuttavia, in debole flessione l’andamento congiunturale complessivo nella media del periodo maggio-luglio (-0,1%).\nIn termini tendenziali la produzione, al netto degli effetti di calendario, rimane invariata.\nTra i principali settori di attività, a parte l’energia, si distingue su base annua la crescita dei prodotti farmaceutici.",
+    "data": "2026-09-10",
+    "release_date": "2026-09-10",
+    "first_seen": "2026-10-01",
+    "offsets_days": [
+      1,
+      7,
+      30
+    ],
+    "checks": [
+      {
+        "offset_days": 1,
+        "due_date": "2026-09-11",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:18.355607"
+      },
+      {
+        "offset_days": 7,
+        "due_date": "2026-09-17",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:19.357110"
+      },
+      {
+        "offset_days": 30,
+        "due_date": "2026-10-10",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      }
+    ]
+  },
+  "67862c6615025739a807cb1ea37ad285591a56fc9039c31c62e5e1eae9b60aba": {
+    "id_hash": "67862c6615025739a807cb1ea37ad285591a56fc9039c31c62e5e1eae9b60aba",
+    "codice": "OCCDISPROLUG2026",
+    "titolo": "Occupati e disoccupati (dati provvisori)- Luglio 2026",
+    "link": "https://www.istat.it/comunicato-stampa/occupati-e-disoccupati-dati-provvisori-luglio-2026/",
+    "testo": "A luglio 2026, su base mensile, il numero degli occupati rimane stabile e si associa alla diminuzione dei disoccupati e degli inattivi.\nLa stabilità degli occupati è sintesi dell’aumento tra gli uomini, i dipendenti permanenti, gli autonomi e i 35-49enni e del calo tra le donne, i dipendenti a termine e tutte le altre classi d’età. Il tasso di occupazione è invariato al 63,2%.\nIl calo delle persone in cerca di lavoro (-1,1%, pari a -17mila unità) coinvolge gli uomini e tutte le classi d’età ad eccezione dei 35-49enni, tra i quali, come per le donne, il numero di disoccupati è in crescita. Il tasso di disoccupazione scende al 5,8% (-0,1 punti), mentre quello giovanile sale al 18,9% (+0,2 punti).\nLa diminuzione degli inattivi tra i 15 e i 64 anni (-0,1%, pari a -17mila unità) riguarda soltanto gli uomini e i 35-49enni; nelle altre classi d’età il numero di inattivi è in crescita e tra le donne è sostanzialmente stabile. Il tasso di inattività rimane invariato al 32,8%.\nConfrontando il trimestre maggio-luglio 2026 con quello precedente (febbraio-aprile 2026) si registra un aumento di 91mila occupati (+0,4%).\nRispetto al trimestre precedente, crescono anche le persone in cerca di lavoro (+3,4%, pari a +49mila unità), mentre diminuiscono gli inattivi di 15-64 anni (-1,2%, pari a -144mila unità).\nA luglio 2026, la crescita del numero di occupati rispetto a luglio 2025 (+1,3%, +307mila unità) interessa gli uomini, le donne, i 25-34enni e coloro che hanno almeno 50 anni; tra i 15-24enni e i 35-49enni, invece, gli occupati diminuiscono. Su base annua il tasso di occupazione aumenta di 0,8 punti.\nRispetto a luglio 2025, diminuisce sia il numero di persone in cerca di lavoro (-0,9%, pari a -14mila unità) sia quello degli inattivi tra i 15 e i 64 anni (-2,5%, pari a -307mila unità).\nIl commento\nA luglio 2026 il numero di occupati, pari a 24 milioni 370mila, è stabile rispetto al mese precedente. La crescita dei dipendenti permanenti (16 milioni 583mila) e degli autonomi (5 milioni 301mila) è compensata dal calo dei dipendenti a termine (2 milioni 486mila).\nLa crescita dell’occupazione rispetto a luglio 2025 (+307mila occupati in un anno) è sintesi dell’aumento dei dipendenti permanenti (+303mila) e degli autonomi (+85mila) e della diminuzione dei dipendenti a termine (-82mila). Su base mensile il tasso di occupazione e quello di inattività rimangono stabili al 63,2% e al 32,8%, rispettivamente, e il tasso di disoccupazione scende al 5,8%.",
+    "data": "2026-09-01",
+    "release_date": "2026-09-01",
+    "first_seen": "2026-10-01",
+    "offsets_days": [
+      1,
+      7,
+      30
+    ],
+    "checks": [
+      {
+        "offset_days": 1,
+        "due_date": "2026-09-02",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:20.970245"
+      },
+      {
+        "offset_days": 7,
+        "due_date": "2026-09-08",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:21.987174"
+      },
+      {
+        "offset_days": 30,
+        "due_date": "2026-10-01",
+        "status": "done",
+        "attempts": 0,
+        "executed_at": "2026-10-01T09:48:22.980630"
+      }
+    ]
+  }
+}
