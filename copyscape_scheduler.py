@@ -99,7 +99,7 @@ DEFAULT_CONFIG_FILE = "copyscape_schedule_config.json"
 DEFAULT_STATE_FILE = "copyscape_schedule_state.json"
 
 DEFAULT_CONFIG: dict[str, Any] = {
-    "default_offsets_days": [1, 7, 30],
+    "default_offsets_days": list(range(1, 31)),
     "overrides": {},
     "max_attempts": 3,
 }

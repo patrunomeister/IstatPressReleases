@@ -174,8 +174,8 @@ Analizzare tutti i comunicati stampa su Copyscape nello stesso momento non
 permette di individuare plagi comparsi solo a distanza di tempo dalla
 pubblicazione. `copyscape_scheduler.py` risolve il problema pianificando,
 per ciascun comunicato presente in `get_print_reviews.csv`, un piano di
-controlli distanziati nel tempo (ad es. dopo 1 giorno, dopo 1 settimana,
-dopo 1 mese), invece di interrogare Copyscape per tutti i testi in
+controlli distanziati nel tempo (di default uno al giorno, da 1 a 30
+giorni dalla data di rilascio), invece di interrogare Copyscape per tutti i testi in
 un'unica soluzione.
 
 Gli offset sono calcolati a partire dal campo `data` del comunicato (la sua
@@ -194,7 +194,7 @@ automaticamente con valori di default alla prima esecuzione):
 
 ```jsonc
 {
-  "default_offsets_days": [1, 7, 30],
+  "default_offsets_days": [1, 2, 3, ..., 30],
   "overrides": {
     // chiave = campo "codice" per intero (non solo i primi caratteri) o
     // "id_hash" di uno specifico comunicato
