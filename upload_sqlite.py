@@ -19,29 +19,17 @@ import hashlib
 import sqlite3
 from pathlib import Path
 
+from copyscape_common import RESULT_COLUMNS
+
 DB_DIR_NAME = "db"
 DB_FILE_NAME = "copyscape_results.db"
 TABLE_NAME = "copyscape_results"
-
-CSV_COLUMNS = [
-    "Index",
-    "data",
-    "codice",
-    "id_hash",
-    "URL",
-    "Title",
-    "Min Words Matched",
-    "Percent Matched",
-    "Words Matched (Full)",
-    "Text Snippet",
-    "View URL",
-]
 
 # Colonne (in ordine) usate per calcolare l'hash di deduplicazione di una
 # riga. "Index" viene escluso perche' e' solo una numerazione progressiva
 # che puo' cambiare da un merge all'altro e non identifica il contenuto
 # effettivo della riga.
-HASH_COLUMNS = CSV_COLUMNS[1:]
+HASH_COLUMNS = RESULT_COLUMNS[1:]
 
 
 def parse_args() -> argparse.Namespace:

@@ -27,8 +27,8 @@ Copyscape ignorando la pianificazione), usare i relativi flag CLI:
     python run_pipeline.py --scheduler-args "--ignore-schedule --example-test"
 
 Per limitare i controlli Copyscape (step 3) solo ai comunicati elencati in
-un file di filtro (un link per riga, con eventuale riga di intestazione
-"link"), usare l'opzione --filter. Se omessa, vengono monitorati tutti i
+un file di filtro (una riga "link,codice_man" per comunicato, con
+intestazione "link,codice_man"), usare l'opzione --filter. Se omessa, vengono monitorati tutti i
 comunicati presenti in get_print_reviews.csv:
 
     python run_pipeline.py --filter filter.txt
@@ -45,7 +45,7 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
-# Ogni step e' una tupla (nome, file .py, argomenti extra di default).
+# Ogni step e' una tupla (nome descrittivo, file .py).
 STEPS: list[tuple[str, str]] = [
     ("Aggiornamento feed RSS", "rss_latest_hash.py"),
     ("Estrazione testo comunicati", "get_print_reviews.py"),
@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
         "--filter",
         default=None,
         help=(
-            "Percorso di un file di testo con un link per riga (es. "
+            "Percorso di un file di testo con righe 'link,codice_man' (es. "
             "filter.txt) da passare a copyscape_scheduler.py per limitare i "
             "controlli Copyscape solo a quei comunicati. Se omesso, vengono "
             "processati tutti i comunicati presenti in get_print_reviews.csv."

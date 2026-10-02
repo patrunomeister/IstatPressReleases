@@ -32,6 +32,22 @@ DEFAULT_COPYSCAPE_USERNAME = ""
 DEFAULT_COPYSCAPE_API_KEY = ""
 # ============================================================================
 
+# Schema del CSV dei risultati: condiviso da copyscape_check/scheduler (scrittura),
+# merge_copyscape_results.py e upload_sqlite.py (lettura).
+RESULT_COLUMNS = [
+    "Index",
+    "data",
+    "codice",
+    "id_hash",
+    "URL",
+    "Title",
+    "Min Words Matched",
+    "Percent Matched",
+    "Words Matched (Full)",
+    "Text Snippet",
+    "View URL",
+]
+
 DEFAULT_IGNORE_SITES = "facebook.com,instagram.com,threads.com,istat.it,x.com,linkedin.com"
 
 
@@ -212,21 +228,7 @@ def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> No
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with output_file.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(
-            [
-                "Index",
-                "data",
-                "codice",
-                "id_hash",
-                "URL",
-                "Title",
-                "Min Words Matched",
-                "Percent Matched",
-                "Words Matched (Full)",
-                "Text Snippet",
-                "View URL",
-            ]
-        )
+        writer.writerow(RESULT_COLUMNS)
 
         for idx, row in enumerate(rows, start=1):
             writer.writerow(

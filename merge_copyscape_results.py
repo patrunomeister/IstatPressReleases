@@ -20,22 +20,10 @@ import csv
 import re
 from pathlib import Path
 
+from copyscape_common import RESULT_COLUMNS
+
 DAY_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 
-
-OUTPUT_HEADER = [
-    "Index",
-    "data",
-    "codice",
-    "id_hash",
-    "URL",
-    "Title",
-    "Min Words Matched",
-    "Percent Matched",
-    "Words Matched (Full)",
-    "Text Snippet",
-    "View URL",
-]
 
 
 def parse_args() -> argparse.Namespace:
@@ -150,7 +138,7 @@ def merge_files(input_glob: str, output_path: Path) -> tuple[int, int, int]:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(OUTPUT_HEADER)
+        writer.writerow(RESULT_COLUMNS)
         for idx, row in enumerate(merged_rows, start=1):
             writer.writerow([idx, *row])
 

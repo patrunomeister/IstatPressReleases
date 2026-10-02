@@ -66,10 +66,13 @@ Filtro dei comunicati da monitorare (--filter):
 
 Non tutti i comunicati presenti in `get_print_reviews.csv` devono
 necessariamente essere analizzati su Copyscape. Passando l'opzione
-`--filter filter.txt` (un file di testo con un link per riga, con
-un'eventuale riga di intestazione "link"), lo scheduler registra ed esegue
-i controlli solo per i comunicati il cui link e' presente in quel file; gli
-altri vengono ignorati. Se l'opzione non viene passata, vengono monitorati
+`--filter filter.txt` (un file di testo con una riga per comunicato
+nel formato `link,codice_man`, con intestazione `link,codice_man`; e'
+accettato anche il solo link), lo scheduler registra ed esegue i controlli
+solo per i comunicati il cui link e' presente in quel file; gli altri
+vengono ignorati. Se e' indicato un codice_man, questo sostituisce il
+"codice" proveniente da get_print_reviews.csv per quel link (negli override
+della config, nello stato e nei risultati). Se l'opzione non viene passata, vengono monitorati
 tutti i comunicati presenti nell'input (comportamento di default).
 
     python copyscape_scheduler.py --filter filter.txt
@@ -79,6 +82,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -164,10 +168,11 @@ def parse_args() -> argparse.Namespace:
         "--filter",
         default=None,
         help=(
-            "Percorso di un file di testo con un link per riga (es. filter.txt) "
-            "che restringe i comunicati da monitorare a quelli presenti nel "
-            "file. Se omesso, vengono monitorati tutti i comunicati presenti "
-            "nell'input."
+            "Percorso di un file di testo (es. filter.txt) con una riga "
+            "'link,codice_man' per comunicato, che restringe i comunicati da "
+            "monitorare a quelli presenti nel file; il codice_man, se indicato, "
+            "sostituisce il codice proveniente dall'input. Se omesso, vengono "
+            "monitorati tutti i comunicati presenti nell'input."
         ),
     )
     return parser.parse_args()
@@ -195,21 +200,24 @@ def load_config(config_file: Path) -> dict[str, Any]:
     return merged
 
 
-def load_filter_links(filter_file: Path) -> set[str]:
-    """Legge un file di filtro (un link per riga, con eventuale riga di
-    intestazione "link") e restituisce l'insieme dei link da monitorare.
-    Righe vuote e l'intestazione (case-insensitive) vengono ignorate."""
+def load_filter_links(filter_file: Path) -> dict[str, str]:
+    """Legge un file di filtro e restituisce un dizionario {link: codice_man}
+    con i comunicati da monitorare. Ogni riga contiene il link e,
+    opzionalmente, il codice_man separato da virgola, punto e virgola o
+    tabulazione (codice_man vuoto se assente). L'intestazione ("link" oppure
+    "link,codice_man") e le righe vuote vengono ignorate."""
     if not filter_file.exists():
         raise FileNotFoundError(f"File di filtro non trovato: {filter_file}")
 
-    links: set[str] = set()
+    filter_map: dict[str, str] = {}
     with filter_file.open("r", encoding="utf-8-sig") as f:
         for line in f:
-            stripped = line.strip()
-            if not stripped or stripped.lower() == "link":
+            parts = [p.strip() for p in re.split(r"[,;\t]", line.strip(), maxsplit=1)]
+            link = parts[0]
+            if not link or link.lower() == "link":
                 continue
-            links.add(stripped)
-    return links
+            filter_map[link] = parts[1] if len(parts) > 1 else ""
+    return filter_map
 
 
 def resolve_offsets(codice: str, id_hash: str, config: dict[str, Any]) -> list[int]:
@@ -283,16 +291,21 @@ def register_new_press_releases(
     state: dict[str, Any],
     config: dict[str, Any],
     today: date,
-    allowed_links: set[str] | None = None,
+    filter_map: dict[str, str] | None = None,
 ) -> int:
     """Aggiunge al file di stato i comunicati non ancora monitorati,
-    calcolando il loro piano di controlli. Se 'allowed_links' e' fornito
-    (non None), vengono registrati solo i comunicati il cui link e'
-    contenuto in tale insieme (filtro da filter.txt); altrimenti vengono
-    registrati tutti. Restituisce il numero di nuove registrazioni."""
+    calcolando il loro piano di controlli. Se 'filter_map' e' fornito
+    (non None), vengono registrati solo i comunicati il cui link e' una
+    chiave del dizionario (filtro da filter.txt); altrimenti vengono
+    registrati tutti. Se per il link e' indicato un codice_man, questo
+    sostituisce il "codice" proveniente dall'input (anche per i comunicati
+    gia' registrati). Restituisce il numero di nuove registrazioni."""
     newly_registered = 0
     for item in press_releases:
         id_hash = item["id_hash"]
+        codice_man = (filter_map or {}).get(item.get("link", ""), "")
+        if codice_man:
+            item = {**item, "codice": codice_man}
         if id_hash in state:
             # Comunicato gia' monitorato: aggiorna solo i metadati
             # descrittivi (non il testo, che resta congelato alla prima
@@ -301,9 +314,11 @@ def register_new_press_releases(
             for field in ("codice", "link", "titolo", "data"):
                 if not entry.get(field) and item.get(field):
                     entry[field] = item[field]
+            if codice_man:
+                entry["codice"] = codice_man
             continue
 
-        if allowed_links is not None and item.get("link", "") not in allowed_links:
+        if filter_map is not None and item.get("link", "") not in filter_map:
             # Comunicato escluso dal filtro: non viene monitorato.
             continue
 
@@ -334,15 +349,15 @@ def find_due_checks(
     today: date,
     max_attempts: int,
     ignore_schedule: bool,
-    allowed_links: set[str] | None = None,
+    filter_map: dict[str, str] | None = None,
 ) -> list[tuple[str, dict[str, Any]]]:
     """Restituisce la lista di (id_hash, check) per i controlli pianificati
-    che vanno eseguiti in questa esecuzione. Se 'allowed_links' e' fornito
+    che vanno eseguiti in questa esecuzione. Se 'filter_map' e' fornito
     (non None), vengono considerati solo i comunicati il cui link e'
-    presente in tale insieme (filtro da filter.txt)."""
+    presente in tale dizionario (filtro da filter.txt)."""
     due: list[tuple[str, dict[str, Any]]] = []
     for id_hash, entry in state.items():
-        if allowed_links is not None and entry.get("link", "") not in allowed_links:
+        if filter_map is not None and entry.get("link", "") not in filter_map:
             continue
         for check in entry.get("checks", []):
             if check["status"] not in ("pending", "error"):
@@ -411,11 +426,11 @@ def main() -> int:
     try:
         config = load_config(config_file)
         press_releases = read_press_release_rows(input_file)
-        allowed_links: set[str] | None = None
+        filter_map: dict[str, str] | None = None
         if args.filter:
             filter_file = Path(args.filter)
-            allowed_links = load_filter_links(filter_file)
-            print(f"Filtro attivo ({filter_file}): {len(allowed_links)} link ammessi")
+            filter_map = load_filter_links(filter_file)
+            print(f"Filtro attivo ({filter_file}): {len(filter_map)} link ammessi")
     except (ValueError, FileNotFoundError) as exc:
         print(f"Errore: {exc}", file=sys.stderr)
         return 1
@@ -424,7 +439,7 @@ def main() -> int:
     max_attempts = int(config.get("max_attempts", DEFAULT_CONFIG["max_attempts"]))
 
     newly_registered = register_new_press_releases(
-        press_releases, state, config, today, allowed_links=allowed_links
+        press_releases, state, config, today, filter_map=filter_map
     )
 
     due_checks = find_due_checks(
@@ -432,7 +447,7 @@ def main() -> int:
         today,
         max_attempts=max_attempts,
         ignore_schedule=args.ignore_schedule,
-        allowed_links=allowed_links,
+        filter_map=filter_map,
     )
 
     print(f"Comunicati letti da {input_file}: {len(press_releases)}")

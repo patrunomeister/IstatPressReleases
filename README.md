@@ -20,6 +20,7 @@ tramite una REST API.
 - [5. Caricamento su SQLite — `upload_sqlite.py`](#5-caricamento-su-sqlite--upload_sqlitepy)
 - [Pipeline completa e orchestratore — `run_pipeline.py`](#pipeline-completa-e-orchestratore--run_pipelinepy)
 - [Pianificazione automatica (Task Scheduler di Windows)](#pianificazione-automatica-task-scheduler-di-windows)
+- [Esecuzione automatica con GitHub Actions](#esecuzione-automatica-con-github-actions)
 - [REST API — `api/main.py`](#rest-api--apimainpy)
 - [Struttura dei file del progetto](#struttura-dei-file-del-progetto)
 
@@ -69,16 +70,6 @@ Copyscape, merge, SQLite) **e** alla REST API:
 pip install -r requirements.txt
 ```
 
-Se invece si vuole distribuire/eseguire solo la REST API separatamente
-dal resto della pipeline, e' disponibile anche
-[`api/requirements.txt`](api/requirements.txt) (identico ma limitato alle
-sole dipendenze di FastAPI/uvicorn/pydantic):
-
-```powershell
-cd api
-pip install -r requirements.txt
-```
-
 ### Configurazione credenziali Copyscape
 
 Le credenziali Copyscape (usate da `copyscape_check.py` e
@@ -94,12 +85,13 @@ fornite in 3 modi, in ordine di priorità:
    $env:COPYSCAPE_USERNAME = "tuo_username"
    $env:COPYSCAPE_API_KEY = "tua_api_key"
    ```
-3. **Costanti nello script** (veloce per utilizzi ripetuti in locale):
-   apri `copyscape_common.py` e modifica:
-   ```python
-   DEFAULT_COPYSCAPE_USERNAME = "tuo_username"
-   DEFAULT_COPYSCAPE_API_KEY = "tua_api_key"
-   ```
+3. **Costanti nello script** (solo per uso locale, **sconsigliato**: non
+   committare mai credenziali reali): in `copyscape_common.py` sono
+   `DEFAULT_COPYSCAPE_USERNAME` e `DEFAULT_COPYSCAPE_API_KEY`, vuote per
+   default.
+
+Nell'esecuzione automatica su GitHub Actions le credenziali sono lette dai
+*secrets* del repository `COPYSCAPE_USERNAME` e `COPYSCAPE_API_KEY`.
 
 ## 1. Aggiornamento feed RSS — `rss_latest_hash.py`
 
@@ -132,6 +124,13 @@ Legge `rss_latest_hash_output.csv`, scarica la pagina HTML di ogni `link` ed
 estrae il testo contenuto nel tag `<div class="guid-article">`, salvando il
 risultato in `get_print_reviews.csv` (tutte le colonne di input, piu' la
 colonna `testo`).
+
+Lo step e' **incrementale**: i testi gia' presenti e non vuoti in
+`get_print_reviews.csv` vengono riutilizzati e vengono scaricate solo le
+pagine nuove o per cui il download precedente non ha prodotto testo (i
+comunicati senza testo vengono saltati dallo scheduler e riprovati alla
+esecuzione successiva). Al termine viene stampato un riepilogo
+(riutilizzati / scaricati / senza testo).
 
 ```powershell
 python .\get_print_reviews.py
@@ -249,14 +248,22 @@ vengono piu' ritentati.
 
 Non tutti i comunicati presenti in `get_print_reviews.csv` devono
 necessariamente essere analizzati su Copyscape. `filter.txt` e' un file di
-testo con un link per riga (con un'eventuale prima riga di intestazione
-"link", ignorata), ad es.:
+testo con una riga per comunicato nel formato `link,codice_man` (la prima
+riga di intestazione e le righe vuote sono ignorate; sono ammessi anche i
+separatori `;` e tabulazione), ad es.:
 
 ```
-link
-https://www.istat.it/comunicato-stampa/prezzi-al-consumo-agosto-2026/
-https://www.istat.it/comunicato-stampa/produzione-industriale-luglio-2026/
+link,codice_man
+https://www.istat.it/comunicato-stampa/prezzi-al-consumo-agosto-2026/,PRECONAGO2026
+https://www.istat.it/comunicato-stampa/produzione-industriale-luglio-2026/,PROINDLUG2026
 ```
+
+Il `codice_man` **sostituisce**, da quel momento in poi, il `codice` che
+`get_print_reviews.csv` riporta per quel link: viene usato per gli override
+di `copyscape_schedule_config.json`, salvato nello stato dello scheduler
+(anche per i comunicati gia' registrati) e scritto nei risultati Copyscape.
+Se il `codice_man` manca (riga con il solo link), resta il `codice`
+originale.
 
 Passando `--filter filter.txt` a `copyscape_scheduler.py` (o a
 `run_pipeline.py`, che lo inoltra automaticamente), vengono registrati e
@@ -277,6 +284,10 @@ lettura del CSV di input, salvataggio dei CSV di output/log) tramite il
 modulo `copyscape_common.py`, cosi' da evitare di mantenere due copie dello
 stesso codice. Le credenziali di default e l'elenco dei domini da ignorare
 sono anch'essi definiti in questo modulo.
+
+Il modulo definisce anche `RESULT_COLUMNS`, lo schema del CSV dei risultati,
+importato da `merge_copyscape_results.py` e `upload_sqlite.py` in modo che le
+colonne restino coerenti lungo tutta la pipeline.
 
 Entrambi gli script producono gli stessi file di output
 (`copyscape_results_<timestamp>.csv` e `copyscape_log.csv`), restando
@@ -366,6 +377,16 @@ pianificazione" (Task Scheduler), creando un'attivita' che esegue
 `python.exe` con argomento `run_pipeline.py` e cartella di lavoro impostata
 sulla root del progetto.
 
+## Esecuzione automatica con GitHub Actions
+
+Il workflow [`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml)
+esegue ogni giorno alle 20:00 (ora italiana, estiva) — e manualmente dalla
+tab *Actions* — il comando `python run_pipeline.py --filter filter.txt`
+sul branch `main`, poi committa i file aggiornati (CSV, stato dello
+scheduler, database SQLite). Richiede i secrets `COPYSCAPE_USERNAME` e
+`COPYSCAPE_API_KEY`. Per cambiare i comunicati monitorati basta modificare
+`filter.txt` (formato `link,codice_man`) su `main`.
+
 ## REST API — `api/main.py`
 
 Applicazione FastAPI che interroga il database SQLite
@@ -374,8 +395,8 @@ sempre attivo: va avviato una volta e lasciato in esecuzione (non va
 schedulato insieme alla pipeline).
 
 ```powershell
-cd api
 pip install -r requirements.txt
+cd api
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -426,7 +447,8 @@ curl "http://localhost:8000/results?id_hash=74be3b8beb34752637237ef85d70d850fddf
 | `copyscape_scheduler.py` | Step 3b: controllo Copyscape pianificato nel tempo. |
 | `copyscape_schedule_config.json` | Configurazione del piano di controlli dello scheduler. |
 | `copyscape_schedule_state.json` | Stato persistente dello scheduler (generato automaticamente). |
-| `filter.txt` | Elenco opzionale di link da monitorare su Copyscape (filtro). |
+| `filter.txt` | Filtro opzionale `link,codice_man` dei comunicati da controllare su Copyscape. |
+| `.github/workflows/pipeline.yml` | Esecuzione giornaliera automatica della pipeline su GitHub Actions. |
 | `copyscape_results_*.csv` / `copyscape_log.csv` | Output del controllo Copyscape (per singola esecuzione / log cumulativo). |
 | `merge_copyscape_results.py` | Step 4: unisce i risultati Copyscape in un unico file. |
 | `output_cumulativo.csv` | Output dello step 4 (input dello step 5). |
@@ -434,4 +456,4 @@ curl "http://localhost:8000/results?id_hash=74be3b8beb34752637237ef85d70d850fddf
 | `db/` | Cartella con il database SQLite `copyscape_results.db`. |
 | `run_pipeline.py` | Orchestratore che esegue in sequenza gli step 1-5. |
 | `api/main.py` | REST API FastAPI per interrogare il database SQLite. |
-| `api/requirements.txt`, `requirements.txt` | Dipendenze Python per la REST API. |
+| `requirements.txt` | Dipendenze Python dell'intero progetto (pipeline + API). |
