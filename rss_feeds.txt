@@ -3,3 +3,4 @@ https://www.istat.it/tag/produzione-industriale/feed/
 https://www.istat.it/tag/occupati-e-disoccupati/feed/
 https://www.istat.it/tag/poverta-relativa-e-assoluta/feed/
 https://www.istat.it/tag/natalita-e-fecondita/feed/
+https://www.istat.it/documenti/produzione-editoriale/feed/
