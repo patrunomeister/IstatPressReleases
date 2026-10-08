@@ -13,6 +13,10 @@ FEED_PREFIX_MAP: dict[str, str] = {
     "prezzi-al-consumo": "PRE",
     "produzione-industriale": "PRO",
     "occupati-e-disoccupati": "OCC",
+    "conti-nazionali": "CON",
+    "poverta-relativa-e-assoluta": "POV",
+    "natalita-e-fecondita": "NAT",
+    "produzione-editoriale": "EDI",
 }
 
 TITLE_CODE_RULES: list[tuple[str, str]] = [
@@ -21,6 +25,7 @@ TITLE_CODE_RULES: list[tuple[str, str]] = [
     ("prezzi alla produzione dell'industria", "IND"),
     ("prezzi alla produzione dell'industria e delle costruzioni", "IND"),
     ("occupati e disoccupati", "DIS"),
+    ("la povertà in Italia", "POV")
 ]
 
 MONTH_MAP: dict[str, str] = {
@@ -39,6 +44,12 @@ MONTH_MAP: dict[str, str] = {
 }
 
 MONTH_YEAR_RE = re.compile(rf"\b({'|'.join(MONTH_MAP.keys())})\s+(\d{{4}})\b")
+ANNUAL_YEAR_RE = re.compile(r"\banno\s+(\d{4})\b")
+ANNUAL_YEAR_RANGE_RE = re.compile(r"\banni\s+\d{4}\s*[-–]\s*(\d{4})\b")
+MONTH_ABBR_BY_NUMBER = {
+    number: abbreviation
+    for number, abbreviation in enumerate(MONTH_MAP.values(), start=1)
+}
 HEADER_5_NEW = ["data", "titolo", "codice", "id_hash", "link"]
 HEADER_4_NEW = ["titolo", "codice", "id_hash", "link"]
 HEADER_4_OLD = ["titolo", "codice", "hashtag", "link"]
@@ -123,13 +134,15 @@ def parse_feed(feed_url: str) -> list[dict[str, str | datetime]]:
 
 
 def extract_feed_slug(feed_url: str) -> str:
-    match = re.search(r"/tag/([^/]+)/feed/", feed_url)
+    match = re.search(r"/(?:tag|documenti)/([^/]+)/feed/", feed_url)
     if not match:
         raise ValueError(f"URL feed non valido o non supportato: {feed_url}")
     return match.group(1).strip().lower()
 
 
-def build_press_code(feed_url: str, title: str) -> str:
+def build_press_code(
+    feed_url: str, title: str, published: datetime | None = None
+) -> str:
     feed_slug = extract_feed_slug(feed_url)
     feed_prefix = FEED_PREFIX_MAP.get(feed_slug)
     if not feed_prefix:
@@ -137,22 +150,55 @@ def build_press_code(feed_url: str, title: str) -> str:
 
     lowered_title = title.lower().replace("’", "'").strip()
 
-    title_code = ""
-    for needle, code in TITLE_CODE_RULES:
-        if needle in lowered_title:
-            title_code = code
-            break
+    if feed_slug == "produzione-editoriale":
+        if published and published != datetime.min.replace(tzinfo=timezone.utc):
+            month_abbr = MONTH_ABBR_BY_NUMBER[published.month]
+            return f"{feed_prefix}{month_abbr}{published.year}"
+        raise ValueError(
+            f"Data di pubblicazione non trovata per il contenuto editoriale: {title}"
+        )
+
+    if feed_slug == "natalita-e-fecondita":
+        title_code = "FEC"
+    elif feed_slug == "poverta-relativa-e-assoluta":
+        title_code = "POV"
+    else:
+        title_code = ""
+        for needle, code in TITLE_CODE_RULES:
+            if needle.lower() in lowered_title:
+                title_code = code
+                break
     if not title_code:
-        raise ValueError(f"Titolo non classificabile: {title}")
+        title_code = "NCL"
 
     provisional_code = "PRO" if "(dati provvisori)" in lowered_title else ""
 
     month_match = MONTH_YEAR_RE.search(lowered_title)
-    if not month_match:
-        raise ValueError(f"Mese/anno non trovati nel titolo: {title}")
-
-    month_abbr = MONTH_MAP[month_match.group(1)]
-    year = month_match.group(2)
+    if month_match:
+        month_abbr = MONTH_MAP[month_match.group(1)]
+        year = month_match.group(2)
+    elif feed_slug in {"natalita-e-fecondita", "poverta-relativa-e-assoluta"}:
+        annual_year_match = ANNUAL_YEAR_RE.search(lowered_title)
+        if annual_year_match:
+            return f"{feed_prefix}{title_code}{provisional_code}{annual_year_match.group(1)}"
+    elif title_code == "NCL":
+        annual_year_range_match = ANNUAL_YEAR_RANGE_RE.search(lowered_title)
+        if annual_year_range_match:
+            return (
+                f"{feed_prefix}{title_code}{provisional_code}"
+                f"{annual_year_range_match.group(1)}"
+            )
+    if not month_match and not (
+        feed_slug in {"natalita-e-fecondita", "poverta-relativa-e-assoluta"}
+        and ANNUAL_YEAR_RE.search(lowered_title)
+    ):
+        if published and published != datetime.min.replace(tzinfo=timezone.utc):
+            month_abbr = MONTH_ABBR_BY_NUMBER[published.month]
+            year = str(published.year)
+        else:
+            raise ValueError(
+                f"Mese/anno o data di pubblicazione non trovati nel titolo: {title}"
+            )
 
     return f"{feed_prefix}{title_code}{provisional_code}{month_abbr}{year}"
 
@@ -191,7 +237,7 @@ def main() -> None:
             normalized_title_for_hash = "".join(title.strip().upper().split())
             title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
             try:
-                code = build_press_code(feed_url, title)
+                code = build_press_code(feed_url, title, published)
             except ValueError as exc:
                 print(f"Classificazione non riuscita ({feed_url}): {exc}")
                 continue

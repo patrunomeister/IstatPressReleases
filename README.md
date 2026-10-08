@@ -109,7 +109,16 @@ elabora **tutti** gli elementi di ciascun feed e aggiorna in append
 Colonne del CSV prodotto: `data, titolo, codice, id_hash, link`
 (`id_hash` e' calcolato come hash SHA-256 del titolo normalizzato; `codice`
 e' un codice sintetico del comunicato, es. `PRECONAGO2026`, derivato dal
-feed di provenienza, dal tipo di comunicato e dal mese/anno nel titolo).
+feed di provenienza, dal tipo di comunicato e dal mese/anno nel titolo. Per il
+feed `natalita-e-fecondita`, i comunicati annuali usano l'anno indicato nel
+titolo (es. `NATFEC2024`); per il feed `poverta-relativa-e-assoluta` si usa
+analogamente `POVPOV2024`. Quando il titolo non specifica un periodo, il mese
+e l'anno sono ricavati dalla data di pubblicazione RSS. Il feed
+`produzione-editoriale` include contenuti eterogenei: il codice usa il prefisso
+`EDI` seguito da mese e anno di pubblicazione RSS (es. `EDIOCT2026`).
+Per i titoli che non corrispondono a una classificazione nota viene usato
+`NCL`; per un intervallo annuale come `Anni 2022-2025` si usa l'anno finale
+(es. `PRENCL2025`), altrimenti mese e anno della pubblicazione RSS.
 
 ```powershell
 python .\rss_latest_hash.py
