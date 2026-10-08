@@ -51,7 +51,7 @@ def load_cached_texts(output_file: Path) -> dict[str, str]:
         return {}
     return {
         link: testo
-        for link, testo in zip(cached["link"], cached["testo"])
+        for link, testo in zip(cached["link"], cached["testo"], strict=True)
         if link and testo.strip()
     }
 

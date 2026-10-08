@@ -92,6 +92,7 @@ from copyscape_common import (
     add_credential_args,
     add_request_args,
     build_base_params,
+    error_log_row,
     read_press_release_rows,
     run_for_single_text,
     save_aggregated_results,
@@ -376,9 +377,22 @@ def execute_due_checks(
     due_checks: list[tuple[str, dict[str, Any]]],
     base_params: dict[str, str],
     max_attempts: int,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    all_result_rows: list[dict[str, Any]] = []
-    call_log_rows: list[dict[str, Any]] = []
+    log_path: Path,
+    all_result_rows: list[dict[str, Any]],
+    unsaved_log_rows: list[dict[str, Any]],
+) -> None:
+    """Esegue i controlli e registra ogni chiamata in `log_path` subito dopo
+    averla effettuata, cosi' le chiamate (e i relativi costi) non si perdono
+    se l'esecuzione viene interrotta. Le righe di risultato e le righe di log
+    non scrivibili vengono accumulate nelle liste passate dal chiamante, che
+    puo' quindi persisterle anche in caso di interruzione."""
+
+    def log_call(log_row: dict[str, Any]) -> None:
+        try:
+            save_call_log([log_row], log_path)
+        except OSError as exc:
+            print(f"Impossibile scrivere il log delle chiamate: {exc}", file=sys.stderr)
+            unsaved_log_rows.append(log_row)
 
     for id_hash, check in due_checks:
         entry = state[id_hash]
@@ -391,7 +405,7 @@ def execute_due_checks(
                 codice=entry.get("codice", ""),
             )
             all_result_rows.extend(result_rows)
-            call_log_rows.append(log_row)
+            log_call(log_row)
             check["status"] = "done"
             check["executed_at"] = datetime.now().isoformat()
         except RuntimeError as exc:
@@ -402,17 +416,9 @@ def execute_due_checks(
                 f"offset={check['offset_days']} giorni): {exc}",
                 file=sys.stderr,
             )
-            call_log_rows.append(
-                {
-                    "date": datetime.now().isoformat(),
-                    "query_url": entry.get("link", ""),
-                    "total_results": "ERROR",
-                    "cost_usd": "",
-                    "query_words": "",
-                }
+            log_call(
+                error_log_row(entry.get("link", ""))
             )
-
-    return all_result_rows, call_log_rows
 
 
 def main() -> int:
@@ -479,10 +485,6 @@ def main() -> int:
         print(f"Errore: {exc}", file=sys.stderr)
         return 1
 
-    all_result_rows, call_log_rows = execute_due_checks(
-        state, due_checks, base_params, max_attempts=max_attempts
-    )
-
     if args.output is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         args.output = f"copyscape_results_{timestamp}.csv"
@@ -492,14 +494,35 @@ def main() -> int:
     output_path = Path(args.output)
     log_path = Path(args.log_output)
 
+    all_result_rows: list[dict[str, Any]] = []
+    unsaved_log_rows: list[dict[str, Any]] = []
+    csv_saved = False
+    # Risultati e stato vengono persistiti anche se l'esecuzione e'
+    # interrotta (es. Ctrl+C): i controlli gia' eseguiti, e addebitati, non
+    # vengono ripetuti al giorno successivo. Lo stato si salva solo se i CSV
+    # sono stati scritti, per non segnare "done" controlli senza risultati.
     try:
-        save_aggregated_results(all_result_rows, output_path)
-        save_call_log(call_log_rows, log_path)
-    except OSError as exc:
-        print(f"Errore durante il salvataggio dei CSV: {exc}", file=sys.stderr)
-        return 1
+        execute_due_checks(
+            state,
+            due_checks,
+            base_params,
+            max_attempts=max_attempts,
+            log_path=log_path,
+            all_result_rows=all_result_rows,
+            unsaved_log_rows=unsaved_log_rows,
+        )
+    finally:
+        try:
+            save_aggregated_results(all_result_rows, output_path)
+            save_call_log(unsaved_log_rows, log_path)
+            csv_saved = True
+        except OSError as exc:
+            print(f"Errore durante il salvataggio dei CSV: {exc}", file=sys.stderr)
+        if csv_saved:
+            save_state(state, state_file)
 
-    save_state(state, state_file)
+    if not csv_saved:
+        return 1
 
     print(f"Controlli eseguiti: {len(due_checks)}")
     print(f"Righe di risultato scritte: {len(all_result_rows)}")

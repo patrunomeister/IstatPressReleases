@@ -23,6 +23,7 @@ from copyscape_common import (
     add_credential_args,
     add_request_args,
     build_base_params,
+    error_log_row,
     read_press_release_rows,
     run_for_single_text,
     save_aggregated_results,
@@ -96,15 +97,7 @@ def main() -> int:
             call_log_rows.append(log_row)
         except RuntimeError as exc:
             print(f"Errore su id_hash {item['id_hash']}: {exc}", file=sys.stderr)
-            call_log_rows.append(
-                {
-                    "date": datetime.now().isoformat(),
-                    "query_url": item.get("link", ""),
-                    "total_results": "ERROR",
-                    "cost_usd": "",
-                    "query_words": "",
-                }
-            )
+            call_log_rows.append(error_log_row(item.get("link", "")))
 
     # Generate output filenames if not provided
     if args.output is None:

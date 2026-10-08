@@ -77,6 +77,15 @@ def ensure_table(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    for column in ("id_hash", "codice"):
+        conn.execute(
+            f"CREATE INDEX IF NOT EXISTS idx_{TABLE_NAME}_{column} "
+            f"ON {TABLE_NAME} ({column})"
+        )
+    conn.execute(
+        f"CREATE INDEX IF NOT EXISTS idx_{TABLE_NAME}_data_day "
+        f"ON {TABLE_NAME} (date(data))"
+    )
     conn.commit()
 
 

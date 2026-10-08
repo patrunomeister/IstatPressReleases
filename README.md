@@ -107,7 +107,7 @@ elabora **tutti** gli elementi di ciascun feed e aggiorna in append
   alla piu' remota** (le righe con data sconosciuta restano in fondo).
 
 Colonne del CSV prodotto: `data, titolo, codice, id_hash, link`
-(`id_hash` e' calcolato come hash SHA-256 del titolo normalizzato; `codice`
+(`id_hash` e' calcolato come hash MD5 dell'URL del comunicato (univoco); `codice`
 e' un codice sintetico del comunicato, es. `PRECONAGO2026`, derivato dal
 feed di provenienza, dal tipo di comunicato e dal mese/anno nel titolo. Per il
 feed `natalita-e-fecondita`, i comunicati annuali usano l'anno indicato nel
@@ -302,6 +302,17 @@ Entrambi gli script producono gli stessi file di output
 (`copyscape_results_<timestamp>.csv` e `copyscape_log.csv`), restando
 compatibili con `merge_copyscape_results.py` e `upload_sqlite.py`.
 
+`copyscape_log.csv` e' il log cumulativo delle chiamate all'API Copyscape: una
+riga per chiamata con `data` (data e ora ISO), `query url`, `totale risultati`,
+`costo in USD` e `query words`. Lo scheduler scrive ogni riga subito dopo la
+chiamata (non a fine esecuzione), cosi' le chiamate gia' effettuate e il loro
+costo restano tracciati anche se l'esecuzione viene interrotta. Le chiamate
+fallite sono registrate con `ERROR` in `totale risultati` e costo vuoto.
+Se lo scheduler viene interrotto (es. Ctrl+C), i risultati ottenuti fino a quel
+momento e il file di stato vengono comunque salvati, cosi' i controlli gia'
+eseguiti non vengono ripetuti (e addebitati di nuovo) alla esecuzione
+successiva. Non copre una terminazione forzata del processo.
+
 ## 4. Merge dei risultati — `merge_copyscape_results.py`
 
 Unisce tutti i file `copyscape_results_*.csv` presenti nella cartella
@@ -433,13 +444,13 @@ Esempi con curl:
 
 ```powershell
 # Filtro per id_hash
-curl "http://localhost:8000/results?id_hash=74be3b8beb34752637237ef85d70d850fddfd66b58247b637349562242eec3bf"
+curl "http://localhost:8000/results?id_hash=20ad3c563b6f0d9356a7ce061235a3bc"
 
 # Filtro per codice
 curl "http://localhost:8000/results?codice=PROINDGIU2026"
 
 # Filtro combinato: id_hash + data (giorno/mese/anno)
-curl "http://localhost:8000/results?id_hash=74be3b8beb34752637237ef85d70d850fddfd66b58247b637349562242eec3bf&data=17/09/2026"
+curl "http://localhost:8000/results?id_hash=20ad3c563b6f0d9356a7ce061235a3bc&data=17/09/2026"
 ```
 
 ## Struttura dei file del progetto

@@ -23,9 +23,7 @@ TITLE_CODE_RULES: list[tuple[str, str]] = [
     ("prezzi al consumo", "CON"),
     ("produzione industriale", "IND"),
     ("prezzi alla produzione dell'industria", "IND"),
-    ("prezzi alla produzione dell'industria e delle costruzioni", "IND"),
     ("occupati e disoccupati", "DIS"),
-    ("la povertà in Italia", "POV")
 ]
 
 MONTH_MAP: dict[str, str] = {
@@ -165,7 +163,7 @@ def build_press_code(
     else:
         title_code = ""
         for needle, code in TITLE_CODE_RULES:
-            if needle.lower() in lowered_title:
+            if needle in lowered_title:
                 title_code = code
                 break
     if not title_code:
@@ -203,6 +201,11 @@ def build_press_code(
     return f"{feed_prefix}{title_code}{provisional_code}{month_abbr}{year}"
 
 
+def compute_id_hash(link: str) -> str:
+    """Identificativo del comunicato: MD5 dell'URL (univoco per comunicato)."""
+    return hashlib.md5(link.strip().encode("utf-8"), usedforsecurity=False).hexdigest()
+
+
 def main() -> None:
     feeds_file = Path(__file__).with_name("rss_feeds.txt")
     output_file = Path(__file__).with_name("rss_latest_hash_output.csv")
@@ -234,15 +237,13 @@ def main() -> None:
                 "" if published == datetime.min.replace(tzinfo=timezone.utc)
                 else published.strftime("%Y-%m-%d")
             )
-            normalized_title_for_hash = "".join(title.strip().upper().split())
-            title_hash = hashlib.sha256(normalized_title_for_hash.encode("utf-8")).hexdigest()
             try:
                 code = build_press_code(feed_url, title, published)
             except ValueError as exc:
                 print(f"Classificazione non riuscita ({feed_url}): {exc}")
                 continue
 
-            rows_to_add.append([data_str, title, code, title_hash, link])
+            rows_to_add.append([data_str, title, code, link])
 
     if not rows_to_add:
         raise RuntimeError("Nessun elemento valido trovato nei feed RSS.")
@@ -263,21 +264,25 @@ def main() -> None:
             for row in data_rows:
                 if is_new_5_header and len(row) >= 5:
                     # Formato aggiornato: data, titolo, codice, id_hash, link
-                    date_value, title_value, code_value, id_hash_value, link_value = row[:5]
-                    existing_rows[link_value] = (date_value, title_value, code_value, id_hash_value)
+                    date_value, title_value, code_value, _, link_value = row[:5]
+                    existing_rows[link_value] = (date_value, title_value, code_value, "")
                 elif len(row) >= 4:
                     # Formato legacy (senza colonna "data"): titolo, codice,
                     # id_hash, link. La data di rilascio non e' nota per
                     # queste righe: viene lasciata vuota.
-                    title_value, code_value, id_hash_value, link_value = row[:4]
-                    existing_rows[link_value] = ("", title_value, code_value, id_hash_value)
+                    title_value, code_value, _, link_value = row[:4]
+                    existing_rows[link_value] = ("", title_value, code_value, "")
 
-    for data_value, title_value, code_value, id_hash_value, link_value in rows_to_add:
+    for data_value, title_value, code_value, link_value in rows_to_add:
         if link_value in existing_rows:
             # Elemento gia' presente nel file di output: non viene
             # re-inserito ne' sovrascritto.
             continue
-        existing_rows[link_value] = (data_value, title_value, code_value, id_hash_value)
+        existing_rows[link_value] = (data_value, title_value, code_value, "")
+
+    # L'id_hash e' sempre derivato dall'URL, che identifica il comunicato.
+    for link_value, (date_value, title_value, code_value, _) in existing_rows.items():
+        existing_rows[link_value] = (date_value, title_value, code_value, compute_id_hash(link_value))
 
     def sort_date_key(date_str: str) -> datetime:
         if not date_str:

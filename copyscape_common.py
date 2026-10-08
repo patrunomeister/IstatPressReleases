@@ -224,6 +224,17 @@ def run_for_single_text(
     return output_rows, log_row
 
 
+def error_log_row(link: str) -> dict[str, Any]:
+    """Riga di log per una chiamata Copyscape fallita (nessun costo noto)."""
+    return {
+        "date": datetime.now().isoformat(),
+        "query_url": link,
+        "total_results": "ERROR",
+        "cost_usd": "",
+        "query_words": "",
+    }
+
+
 def save_aggregated_results(rows: list[dict[str, Any]], output_file: Path) -> None:
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with output_file.open("w", newline="", encoding="utf-8") as f:
