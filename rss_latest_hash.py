@@ -206,6 +206,34 @@ def compute_id_hash(link: str) -> str:
     return hashlib.md5(link.strip().encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
+EDITORIAL_CODE_RE = re.compile(r"^(EDI[A-Z]{3}\d{4})(\d{2})?$")
+
+
+def assign_editorial_progressives(rows: dict[str, tuple[str, str, str, str]]) -> None:
+    """Aggiunge un progressivo a due cifre ai codici EDI (es. EDILUG202601).
+
+    Piu' contenuti editoriali dello stesso mese condividono il codice base:
+    il progressivo li rende univoci. I progressivi gia' assegnati non
+    cambiano mai; i nuovi contenuti ricevono il numero successivo, in ordine
+    di data e poi di link. `rows` e' {link: (data, titolo, codice, id_hash)}."""
+    last_by_base: dict[str, int] = {}
+    pending: list[tuple[str, str]] = []
+    for link, (date_value, _, code, _) in rows.items():
+        match = EDITORIAL_CODE_RE.match(code)
+        if not match:
+            continue
+        base, suffix = match.groups()
+        if suffix:
+            last_by_base[base] = max(last_by_base.get(base, 0), int(suffix))
+        else:
+            pending.append((date_value, link))
+
+    for _, link in sorted(pending):
+        date_value, title_value, code, id_hash = rows[link]
+        last_by_base[code] = last_by_base.get(code, 0) + 1
+        rows[link] = (date_value, title_value, f"{code}{last_by_base[code]:02d}", id_hash)
+
+
 def main() -> None:
     feeds_file = Path(__file__).with_name("rss_feeds.txt")
     output_file = Path(__file__).with_name("rss_latest_hash_output.csv")
@@ -283,6 +311,8 @@ def main() -> None:
     # L'id_hash e' sempre derivato dall'URL, che identifica il comunicato.
     for link_value, (date_value, title_value, code_value, _) in existing_rows.items():
         existing_rows[link_value] = (date_value, title_value, code_value, compute_id_hash(link_value))
+
+    assign_editorial_progressives(existing_rows)
 
     def sort_date_key(date_str: str) -> datetime:
         if not date_str:

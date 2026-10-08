@@ -115,7 +115,9 @@ titolo (es. `NATFEC2024`); per il feed `poverta-relativa-e-assoluta` si usa
 analogamente `POVPOV2024`. Quando il titolo non specifica un periodo, il mese
 e l'anno sono ricavati dalla data di pubblicazione RSS. Il feed
 `produzione-editoriale` include contenuti eterogenei: il codice usa il prefisso
-`EDI` seguito da mese e anno di pubblicazione RSS (es. `EDIOCT2026`).
+`EDI` seguito da mese e anno di pubblicazione RSS e da un progressivo a due cifre
+che distingue i contenuti dello stesso mese (es. `EDIOTT202601`, `EDIOTT202602`);
+i progressivi gia' assegnati non cambiano, i nuovi contenuti ricevono il successivo.
 Per i titoli che non corrispondono a una classificazione nota viene usato
 `NCL`; per un intervallo annuale come `Anni 2022-2025` si usa l'anno finale
 (es. `PRENCL2025`), altrimenti mese e anno della pubblicazione RSS.
