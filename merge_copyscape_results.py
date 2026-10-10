@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Merge Copyscape result CSV files into a cumulative output file.
 
-By default, this script reads all files matching `copyscape_results_*.csv`
-in the current folder, appends their rows, and writes `output_cumulativo.csv`.
+By default, this script reads all files matching
+`copyscape_results_*_date.csv` (i risultati arricchiti da check_date.py) in
+the current folder, keeps only the rows whose `before_cutoff` field is `no`
+(pagine non precedenti alla data limite), appends them, and writes
+`output_cumulativo.csv`.
 
 Per evitare duplicati quando lo script copyscape_check.py viene eseguito piu'
 volte nello stesso giorno per lo stesso articolo, le righe con lo stesso
@@ -35,8 +38,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--input-glob",
-        default="copyscape_results_*.csv",
-        help="Glob pattern for input files (default: copyscape_results_*.csv)",
+        default="copyscape_results_*_date.csv",
+        help="Glob pattern for input files (default: copyscape_results_*_date.csv)",
     )
     parser.add_argument(
         "--output",
@@ -91,6 +94,9 @@ def read_rows_from_file(file_path: Path) -> list[list[str]]:
             return rows
 
         for raw_row in reader:
+            # Solo le pagine non precedenti alla data limite (check_date.py).
+            if (raw_row.get("before_cutoff") or "").strip().lower() != "no":
+                continue
             normalized = normalize_row(raw_row)
 
             # Keep only rows that have at least URL or title-like payload.

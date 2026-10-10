@@ -7,8 +7,11 @@ della pipeline:
     1. rss_latest_hash.py        -> aggiorna rss_latest_hash_output.csv
     2. get_print_reviews.py      -> aggiorna get_print_reviews.csv (+ testo)
     3. copyscape_scheduler.py    -> esegue i controlli Copyscape in scadenza
-    4. merge_copyscape_results.py -> aggiorna output_cumulativo.csv
-    5. upload_sqlite.py          -> aggiorna db/copyscape_results.db
+    4. check_date.py             -> aggiunge la data di pubblicazione delle
+                                    pagine al CSV dei risultati dello step 3
+                                    (copyscape_results_<ts>_date.csv)
+    5. merge_copyscape_results.py -> aggiorna output_cumulativo.csv
+    6. upload_sqlite.py          -> aggiorna db/copyscape_results.db
 
 Ogni step viene eseguito con lo stesso interprete Python in uso
 (sys.executable), cosi' da usare automaticamente il venv/ambiente corrente.
@@ -50,6 +53,7 @@ STEPS: list[tuple[str, str]] = [
     ("Aggiornamento feed RSS", "rss_latest_hash.py"),
     ("Estrazione testo comunicati", "get_print_reviews.py"),
     ("Controlli Copyscape pianificati", "copyscape_scheduler.py"),
+    ("Data di pubblicazione dei risultati", "check_date.py"),
     ("Merge risultati cumulativi", "merge_copyscape_results.py"),
     ("Caricamento su SQLite", "upload_sqlite.py"),
 ]
@@ -112,13 +116,29 @@ def main() -> int:
     if args.filter:
         scheduler_extra_args = [*scheduler_extra_args, "--filter", args.filter]
 
+    # Il nome del CSV dei risultati e' deciso qui, cosi' check_date.py sa su
+    # quale file lavorare. Lo scheduler lo crea solo se esegue dei controlli.
+    results_file = f"copyscape_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    if "--output" not in scheduler_extra_args:
+        scheduler_extra_args = [*scheduler_extra_args, "--output", results_file]
+    else:
+        results_file = scheduler_extra_args[scheduler_extra_args.index("--output") + 1]
+    check_date_args = [results_file, "--release-dates", "get_print_reviews.csv"]
+
     failures: list[str] = []
     for name, script in STEPS:
         if script in skip_set:
             print(f"\n[SKIP] {name} ({script})")
             continue
 
-        extra_args = scheduler_extra_args if script == "copyscape_scheduler.py" else []
+        if script == "check_date.py" and not (SCRIPT_DIR / results_file).exists():
+            print(f"\n[SKIP] {name} ({script}): nessun file di risultati ({results_file})")
+            continue
+
+        extra_args = {
+            "copyscape_scheduler.py": scheduler_extra_args,
+            "check_date.py": check_date_args,
+        }.get(script, [])
         return_code = run_step(name, script, extra_args)
 
         if return_code != 0:

@@ -41,8 +41,13 @@ rss_feeds.txt
      │  scadenza, filtrati       filtrati tramite filter.txt)
      │  da filter.txt)
      ▼
+3c. check_date.py           → copyscape_results_<timestamp>_date.csv
+     │                          (aggiunge published_date e before_cutoff:
+     │                           pagine prima del rilascio del comunicato)
+     ▼
 4. merge_copyscape_results.py → output_cumulativo.csv
-     │                           (deduplicato per id_hash + giorno + URL)
+     │                           (solo righe con before_cutoff = no,
+     │                            deduplicato per id_hash + giorno + URL)
      ▼
 5. upload_sqlite.py          → db/copyscape_results.db
                                 (append incrementale, nessun duplicato)
@@ -315,10 +320,42 @@ momento e il file di stato vengono comunque salvati, cosi' i controlli gia'
 eseguiti non vengono ripetuti (e addebitati di nuovo) alla esecuzione
 successiva. Non copre una terminazione forzata del processo.
 
+### 3c. Data di pubblicazione dei risultati — `check_date.py`
+
+Copyscape non restituisce la data di pubblicazione delle pagine trovate. Lo
+script scarica ogni URL di un CSV di risultati (colonna `URL`, una sola volta
+per URL distinto) e ne ricava la data, in quest'ordine: metadati HTML
+(`article:published_time`, JSON-LD `datePublished`, `<time>`) e testo accanto a
+diciture come "pubblicato il". L'header `Last-Modified` non viene usato perche'
+indica la modifica, non la pubblicazione. Non usa modelli AI.
+
+Nella pipeline gira subito dopo lo scheduler, sul CSV dei risultati prodotto
+in quella esecuzione (`copyscape_results_<timestamp>.csv`, il cui nome e'
+deciso da `run_pipeline.py`), con `--release-dates get_print_reviews.csv`. Se
+lo scheduler non ha eseguito controlli, il CSV non esiste e lo step viene
+saltato.
+
+```powershell
+python .\check_date.py .\copyscape_results_20261010_084828.csv --release-dates .\get_print_reviews.csv
+python .\check_date.py .\copyscape_results_20261010_084828.csv --before 2026-10-09
+```
+
+Il CSV di output (`<input>_date.csv`) aggiunge le colonne `published_date`,
+`date_source`, `date_status` (`ok`, `not_found`, `fetch_error`) e
+`before_cutoff`. La data limite e' la data di rilascio del comunicato di ogni
+riga (`--release-dates`, colonne `id_hash` e `data`) oppure una data fissa
+(`--before`, ha la precedenza): `before_cutoff` vale `yes` se la pagina e'
+stata pubblicata prima, `no` altrimenti, anche quando la data della pagina non
+e' stata trovata. Con `--exclude-before` le righe `yes` non vengono scritte.
+
 ## 4. Merge dei risultati — `merge_copyscape_results.py`
 
-Unisce tutti i file `copyscape_results_*.csv` presenti nella cartella
-corrente in un unico file cumulativo `output_cumulativo.csv`, elaborandoli
+Unisce tutti i file `copyscape_results_*_date.csv` (output di `check_date.py`)
+presenti nella cartella corrente in un unico file cumulativo
+`output_cumulativo.csv`, tenendo **solo le righe con `before_cutoff` uguale a
+`no`**. I file di risultati senza suffisso `_date` (ad esempio quelli generati
+prima dell'introduzione di `check_date.py`) non vengono piu' uniti: per
+includerli, eseguire prima `check_date.py` su di essi. I file vengono elaborati
 in ordine cronologico (ordine dei nomi file). Per evitare duplicati quando
 Copyscape viene interrogato piu' volte per lo stesso comunicato, le righe
 con lo stesso `id_hash`, la stessa data (giorno/mese/anno nel campo `data`)
@@ -330,7 +367,7 @@ python .\merge_copyscape_results.py
 
 Opzioni utili:
 
-- `--input-glob "copyscape_results_*.csv"` per un pattern di file diverso
+- `--input-glob "copyscape_results_*_date.csv"` per un pattern di file diverso
 - `--output output_cumulativo.csv` per un percorso di output alternativo
 
 ## 5. Caricamento su SQLite — `upload_sqlite.py`
@@ -354,8 +391,8 @@ Opzioni utili:
 
 ## Pipeline completa e orchestratore — `run_pipeline.py`
 
-Per non dover schedulare 5 comandi separati, `run_pipeline.py` esegue in
-sequenza tutti gli step 1-5 con lo stesso interprete Python in uso,
+Per non dover schedulare 6 comandi separati, `run_pipeline.py` esegue in
+sequenza tutti gli step (1, 2, 3, 3c, 4, 5) con lo stesso interprete Python in uso,
 fermandosi al primo errore (cosi' non si propagano dati incompleti agli
 step successivi):
 
@@ -471,11 +508,12 @@ curl "http://localhost:8000/results?id_hash=20ad3c563b6f0d9356a7ce061235a3bc&dat
 | `copyscape_schedule_state.json` | Stato persistente dello scheduler (generato automaticamente). |
 | `filter.txt` | Filtro opzionale `link,codice_man` dei comunicati da controllare su Copyscape. |
 | `.github/workflows/pipeline.yml` | Esecuzione giornaliera automatica della pipeline su GitHub Actions. |
-| `copyscape_results_*.csv` / `copyscape_log.csv` | Output del controllo Copyscape (per singola esecuzione / log cumulativo). |
-| `merge_copyscape_results.py` | Step 4: unisce i risultati Copyscape in un unico file. |
+| `check_date.py` | Step 3c: aggiunge la data di pubblicazione delle pagine trovate e `before_cutoff`. |
+| `copyscape_results_*.csv` / `copyscape_results_*_date.csv` / `copyscape_log.csv` | Output dello scheduler (per singola esecuzione) / arricchito da `check_date.py` / log cumulativo delle chiamate. |
+| `merge_copyscape_results.py` | Step 4: unisce i risultati `_date` con `before_cutoff = no` in un unico file. |
 | `output_cumulativo.csv` | Output dello step 4 (input dello step 5). |
 | `upload_sqlite.py` | Step 5: carica i risultati cumulativi nel database SQLite. |
 | `db/` | Cartella con il database SQLite `copyscape_results.db`. |
-| `run_pipeline.py` | Orchestratore che esegue in sequenza gli step 1-5. |
+| `run_pipeline.py` | Orchestratore che esegue in sequenza gli step 1-5 (incluso 3c). |
 | `api/main.py` | REST API FastAPI per interrogare il database SQLite. |
 | `requirements.txt` | Dipendenze Python dell'intero progetto (pipeline + API). |
