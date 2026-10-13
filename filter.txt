@@ -1,2 +1,3 @@
 link, codice_man
 https://www.istat.it/comunicato-stampa/produzione-industriale-agosto-2026/, CS-PRODIND-M202608-261009
+https://www.istat.it/produzione-editoriale/inflazione/, SD-INFL-M202608-261010
