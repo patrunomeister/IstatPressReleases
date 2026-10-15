@@ -193,9 +193,9 @@
       {
         "offset_days": 6,
         "due_date": "2026-10-15",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-15T22:12:51.525391"
       },
       {
         "offset_days": 7,
@@ -419,9 +419,9 @@
       {
         "offset_days": 2,
         "due_date": "2026-10-15",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-15T22:12:54.156420"
       },
       {
         "offset_days": 3,
