@@ -1,3 +1,4 @@
 link, codice_man
 https://www.istat.it/comunicato-stampa/produzione-industriale-agosto-2026/, CS-PRODIND-M202608-261009
 https://www.istat.it/produzione-editoriale/inflazione/, SD-INFL-M202608-261010
+https://www.istat.it/comunicato-stampa/la-poverta-in-italia-anno-2025/, CS-POV-A2025-261011
