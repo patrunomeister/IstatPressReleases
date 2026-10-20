@@ -228,9 +228,9 @@
       {
         "offset_days": 11,
         "due_date": "2026-10-20",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-20T22:20:03.325619"
       },
       {
         "offset_days": 12,
@@ -454,9 +454,9 @@
       {
         "offset_days": 7,
         "due_date": "2026-10-20",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-20T22:20:05.806172"
       },
       {
         "offset_days": 8,
@@ -694,9 +694,9 @@
       {
         "offset_days": 5,
         "due_date": "2026-10-20",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-20T22:20:08.446600"
       },
       {
         "offset_days": 6,
