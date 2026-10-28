@@ -277,16 +277,16 @@
       {
         "offset_days": 18,
         "due_date": "2026-10-27",
-        "status": "error",
+        "status": "done",
         "attempts": 1,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:02.454730"
       },
       {
         "offset_days": 19,
         "due_date": "2026-10-28",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:03.770436"
       },
       {
         "offset_days": 20,
@@ -503,16 +503,16 @@
       {
         "offset_days": 14,
         "due_date": "2026-10-27",
-        "status": "error",
+        "status": "done",
         "attempts": 1,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:05.830592"
       },
       {
         "offset_days": 15,
         "due_date": "2026-10-28",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:07.315798"
       },
       {
         "offset_days": 16,
@@ -743,16 +743,16 @@
       {
         "offset_days": 12,
         "due_date": "2026-10-27",
-        "status": "error",
+        "status": "done",
         "attempts": 1,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:09.568937"
       },
       {
         "offset_days": 13,
         "due_date": "2026-10-28",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:11.519677"
       },
       {
         "offset_days": 14,
@@ -955,16 +955,16 @@
       {
         "offset_days": 6,
         "due_date": "2026-10-27",
-        "status": "error",
+        "status": "done",
         "attempts": 1,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:14.134294"
       },
       {
         "offset_days": 7,
         "due_date": "2026-10-28",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-28T22:33:15.995239"
       },
       {
         "offset_days": 8,

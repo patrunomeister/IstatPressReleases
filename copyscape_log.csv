@@ -76,3 +76,11 @@ data,query url,totale risultati,costo in USD,query words
 2026-10-27T22:09:25.010104,https://www.istat.it/produzione-editoriale/inflazione/,ERROR,,
 2026-10-27T22:09:26.377555,https://www.istat.it/comunicato-stampa/la-poverta-in-italia-anno-2025/,ERROR,,
 2026-10-27T22:09:27.818081,https://www.istat.it/comunicato-stampa/natalita-e-fecondita-della-popolazione-residente-anno-2025/,ERROR,,
+2026-10-28T22:33:02.454473,https://www.istat.it/comunicato-stampa/produzione-industriale-agosto-2026/,33,0.04,300
+2026-10-28T22:33:03.770181,https://www.istat.it/comunicato-stampa/produzione-industriale-agosto-2026/,33,0.04,300
+2026-10-28T22:33:05.830410,https://www.istat.it/produzione-editoriale/inflazione/,17,0.23,2127
+2026-10-28T22:33:07.315623,https://www.istat.it/produzione-editoriale/inflazione/,17,0.23,2127
+2026-10-28T22:33:09.568668,https://www.istat.it/comunicato-stampa/la-poverta-in-italia-anno-2025/,62,0.17,1528
+2026-10-28T22:33:11.519356,https://www.istat.it/comunicato-stampa/la-poverta-in-italia-anno-2025/,62,0.17,1528
+2026-10-28T22:33:14.134013,https://www.istat.it/comunicato-stampa/natalita-e-fecondita-della-popolazione-residente-anno-2025/,59,0.28,2635
+2026-10-28T22:33:15.994894,https://www.istat.it/comunicato-stampa/natalita-e-fecondita-della-popolazione-residente-anno-2025/,58,0.28,2635
