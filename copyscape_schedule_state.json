@@ -298,9 +298,9 @@
       {
         "offset_days": 21,
         "due_date": "2026-10-30",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-30T22:24:40.754133"
       },
       {
         "offset_days": 22,
@@ -524,9 +524,9 @@
       {
         "offset_days": 17,
         "due_date": "2026-10-30",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-30T22:24:43.267808"
       },
       {
         "offset_days": 18,
@@ -764,9 +764,9 @@
       {
         "offset_days": 15,
         "due_date": "2026-10-30",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-30T22:24:46.015570"
       },
       {
         "offset_days": 16,
@@ -976,9 +976,9 @@
       {
         "offset_days": 9,
         "due_date": "2026-10-30",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-10-30T22:24:48.860899"
       },
       {
         "offset_days": 10,
@@ -1123,6 +1123,260 @@
       {
         "offset_days": 30,
         "due_date": "2026-11-20",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      }
+    ]
+  },
+  "e0b0ac560cb94c5881968a2fcb01e20a": {
+    "id_hash": "e0b0ac560cb94c5881968a2fcb01e20a",
+    "codice": "CS-IPC-M202610-261013",
+    "titolo": "Prezzi al consumo (dati provvisori) – Ottobre 2026",
+    "link": "https://www.istat.it/comunicato-stampa/prezzi-al-consumo-dati-provvisori-ottobre-2026/",
+    "testo": "Secondo le stime preliminari, nel mese di ottobre 2026 l’indice nazionale dei prezzi al consumo per l’intera collettività (NIC), al lordo dei tabacchi, registra una variazione pari a +0,9% su base mensile e a +5,4% su base annua (da +4,2% del mese precedente).\nLa dinamica dell’inflazione è influenzata prevalentemente dall’andamento dei prezzi degli Energetici, regolamentati (da +25,8% a +59,5%) e non (da +22,5% a +29,4%), di quelli degli Alimentari non lavorati (da +5,5% a +7,5%) e dei Servizi relativi ai trasporti (da +1,6% a +3,1%), cui si aggiunge l’attenuazione del calo dei prezzi degli Alimentari lavorati (da -0,6% a -0,2%).\nNel mese di ottobre l’“inflazione di fondo”, calcolata al netto degli energetici e degli alimentari freschi, accelera (da +1,6% a +2,0%), così come quella al netto dei soli beni energetici (da +2,0% a +2,5%).\nL’accelerazione del ritmo di crescita dei prezzi dei Beni (da +5,4% a +7,5%) è marcatamente più ampia di quella dei Servizi (da +2,6% a +2,9%). Il differenziale tra il comparto dei servizi e quello dei beni si porta, dunque, da -2,8 a -4,6 punti percentuali.\nIn accelerazione su base tendenziale risultano sia i prezzi dei Beni alimentari, per la cura della casa e della persona (da +1,5% a +2,5%), sia quelli dei prodotti ad alta frequenza d’acquisto (da +5,2% a +5,8%).\nLa variazione congiunturale dell’indice generale riflette soprattutto l’aumento dei prezzi degli Energetici regolamentati (+18,8%) e non regolamentati (+4,9%), degli Alimentari non lavorati (+1,8%), dei Servizi relativi ai trasporti (+1,2%) e degli Alimentari lavorati (+0,5%). Diminuiscono su base mensile i prezzi dei Servizi ricreativi, culturali e per la cura della persona (-0,9%).\nL’inflazione acquisita per il 2026 è pari a +3,4% per l’indice generale e a +1,9% per la componente di fondo.\nIn base alle stime preliminari, l’indice armonizzato dei prezzi al consumo (IPCA) registra una variazione pari a +1,2% su base mensile e a +5,6% su base annua (da +4,2% del mese precedente).\nIl commento\nA ottobre 2026 l’inflazione sale a +5,4% (da +4,2% di settembre), tornando al livello registrato ad agosto 2023. L’accelerazione dell’inflazione risente principalmente dell’aumento dei prezzi dei beni energetici (da +22,6% a +31,4%), ancora influenzato dal quadro geopolitico internazionale. Un contributo all’inflazione si deve anche al settore alimentare, soprattutto alla componente dei prodotti non lavorati (da +5,5% a +7,5%), e ad alcune tipologie di servizi, in particolare quelli relativi ai trasporti (da +1,6% a +3,1%).\nIl cosiddetto “carrello della spesa” accelera (da +1,5% a +2,5%) e l’inflazione di fondo si attesa a +2,0% (da +1,6%). L’inflazione acquisita a ottobre, per il 2026, risulta pari al +3,4%.\n#IstaTalk\nDov’è arrivata l’inflazione a fine ottobre?\nGuarda su Youtube",
+    "data": "2026-10-30",
+    "release_date": "2026-10-30",
+    "first_seen": "2026-10-30",
+    "offsets_days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "checks": [
+      {
+        "offset_days": 1,
+        "due_date": "2026-10-31",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 2,
+        "due_date": "2026-11-01",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 3,
+        "due_date": "2026-11-02",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 4,
+        "due_date": "2026-11-03",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 5,
+        "due_date": "2026-11-04",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 6,
+        "due_date": "2026-11-05",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 7,
+        "due_date": "2026-11-06",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 8,
+        "due_date": "2026-11-07",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 9,
+        "due_date": "2026-11-08",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 10,
+        "due_date": "2026-11-09",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 11,
+        "due_date": "2026-11-10",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 12,
+        "due_date": "2026-11-11",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 13,
+        "due_date": "2026-11-12",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 14,
+        "due_date": "2026-11-13",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 15,
+        "due_date": "2026-11-14",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 16,
+        "due_date": "2026-11-15",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 17,
+        "due_date": "2026-11-16",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 18,
+        "due_date": "2026-11-17",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 19,
+        "due_date": "2026-11-18",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 20,
+        "due_date": "2026-11-19",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 21,
+        "due_date": "2026-11-20",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 22,
+        "due_date": "2026-11-21",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 23,
+        "due_date": "2026-11-22",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 24,
+        "due_date": "2026-11-23",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 25,
+        "due_date": "2026-11-24",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 26,
+        "due_date": "2026-11-25",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 27,
+        "due_date": "2026-11-26",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 28,
+        "due_date": "2026-11-27",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 29,
+        "due_date": "2026-11-28",
+        "status": "pending",
+        "attempts": 0,
+        "executed_at": null
+      },
+      {
+        "offset_days": 30,
+        "due_date": "2026-11-29",
         "status": "pending",
         "attempts": 0,
         "executed_at": null
