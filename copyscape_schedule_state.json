@@ -312,9 +312,9 @@
       {
         "offset_days": 23,
         "due_date": "2026-11-01",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-01T21:59:58.370801"
       },
       {
         "offset_days": 24,
@@ -538,9 +538,9 @@
       {
         "offset_days": 19,
         "due_date": "2026-11-01",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-01T22:00:00.807321"
       },
       {
         "offset_days": 20,
@@ -778,9 +778,9 @@
       {
         "offset_days": 17,
         "due_date": "2026-11-01",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-01T22:00:04.152167"
       },
       {
         "offset_days": 18,
@@ -990,9 +990,9 @@
       {
         "offset_days": 11,
         "due_date": "2026-11-01",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-01T22:00:07.220085"
       },
       {
         "offset_days": 12,
@@ -1181,9 +1181,9 @@
       {
         "offset_days": 2,
         "due_date": "2026-11-01",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-01T22:00:09.440482"
       },
       {
         "offset_days": 3,
