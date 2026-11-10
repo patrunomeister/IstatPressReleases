@@ -3,7 +3,7 @@ name: Pipeline serale
 on:
   schedule:
     # Cron in UTC: 17:00 UTC = 19:00 ora legale italiana (CEST)
-    - cron: "0 17 * * *"
+    - cron: "0 16 * * *"
   workflow_dispatch: {}   # permette anche l'avvio manuale dalla tab Actions
 
 permissions:
