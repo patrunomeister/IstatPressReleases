@@ -21,7 +21,7 @@ Componenti:
   per il calcolo delle scadenze ("release_date"), del testo da analizzare
   (congelato al momento della registrazione, cosi' da restare disponibile
   anche quando il comunicato non compare piu' nel feed RSS piu' recente) e
-  dello stato di ciascun controllo pianificato (pending / done / error /
+  dello stato di ciascun controllo pianificato (pending / done / skipped /
   failed).
 
 Le date di scadenza dei controlli sono calcolate a partire dal campo "data"
@@ -38,9 +38,9 @@ Ad ogni esecuzione lo script:
 1. legge `get_print_reviews.csv` e registra i comunicati non ancora
    presenti nel file di stato, calcolando le date dei controlli pianificati
    in base alla configurazione e alla data di rilascio del comunicato;
-2. individua i controlli "in scadenza" (data odierna >= data pianificata) e
-   non ancora eseguiti con successo;
-3. per ciascun controllo in scadenza chiama l'API Copyscape (riusando le
+2. individua i controlli pianificati per la data odierna; quelli rimasti
+   pendenti nei giorni precedenti vengono saltati definitivamente;
+3. per ciascun controllo previsto oggi chiama l'API Copyscape (riusando le
    funzioni di copyscape_check.py) e salva i risultati con lo stesso formato
    di copyscape_check.py (`copyscape_results_<timestamp>.csv` e
    `copyscape_log.csv`), cosi' da restare compatibile con
@@ -106,7 +106,6 @@ DEFAULT_STATE_FILE = "copyscape_schedule_state.json"
 DEFAULT_CONFIG: dict[str, Any] = {
     "default_offsets_days": list(range(1, 31)),
     "overrides": {},
-    "max_attempts": 3,
 }
 
 
@@ -348,27 +347,39 @@ def register_new_press_releases(
 def find_due_checks(
     state: dict[str, Any],
     today: date,
-    max_attempts: int,
     ignore_schedule: bool,
     filter_map: dict[str, str] | None = None,
 ) -> list[tuple[str, dict[str, Any]]]:
     """Restituisce la lista di (id_hash, check) per i controlli pianificati
-    che vanno eseguiti in questa esecuzione. Se 'filter_map' e' fornito
-    (non None), vengono considerati solo i comunicati il cui link e'
-    presente in tale dizionario (filtro da filter.txt)."""
+    per oggi. I controlli arretrati non vengono recuperati e i controlli
+    falliti non vengono ritentati. Se 'filter_map' e' fornito (non None),
+    vengono considerati solo i comunicati il cui link e' presente in tale
+    dizionario (filtro da filter.txt)."""
     due: list[tuple[str, dict[str, Any]]] = []
     for id_hash, entry in state.items():
         if filter_map is not None and entry.get("link", "") not in filter_map:
             continue
         for check in entry.get("checks", []):
-            if check["status"] not in ("pending", "error"):
-                continue
-            if check.get("attempts", 0) >= max_attempts:
+            if check["status"] != "pending":
                 continue
             due_date = date.fromisoformat(check["due_date"])
-            if ignore_schedule or due_date <= today:
+            if ignore_schedule or due_date == today:
                 due.append((id_hash, check))
     return due
+
+
+def skip_missed_checks(state: dict[str, Any], today: date) -> int:
+    """Segna come saltati i controlli pendenti o falliti con scadenza passata."""
+    skipped = 0
+    for entry in state.values():
+        for check in entry.get("checks", []):
+            if check["status"] not in ("pending", "error"):
+                continue
+            if date.fromisoformat(check["due_date"]) < today:
+                check["status"] = "skipped"
+                check["skipped_at"] = datetime.now().isoformat()
+                skipped += 1
+    return skipped
 
 
 
@@ -376,7 +387,6 @@ def execute_due_checks(
     state: dict[str, Any],
     due_checks: list[tuple[str, dict[str, Any]]],
     base_params: dict[str, str],
-    max_attempts: int,
     log_path: Path,
     all_result_rows: list[dict[str, Any]],
     unsaved_log_rows: list[dict[str, Any]],
@@ -410,7 +420,7 @@ def execute_due_checks(
             check["executed_at"] = datetime.now().isoformat()
         except RuntimeError as exc:
             check["attempts"] = check.get("attempts", 0) + 1
-            check["status"] = "failed" if check["attempts"] >= max_attempts else "error"
+            check["status"] = "failed"
             print(
                 f"Errore nel controllo (id_hash={id_hash}, "
                 f"offset={check['offset_days']} giorni): {exc}",
@@ -442,22 +452,21 @@ def main() -> int:
         return 1
 
     state = load_state(state_file)
-    max_attempts = int(config.get("max_attempts", DEFAULT_CONFIG["max_attempts"]))
-
     newly_registered = register_new_press_releases(
         press_releases, state, config, today, filter_map=filter_map
     )
 
+    skipped_checks = skip_missed_checks(state, today)
     due_checks = find_due_checks(
         state,
         today,
-        max_attempts=max_attempts,
         ignore_schedule=args.ignore_schedule,
         filter_map=filter_map,
     )
 
     print(f"Comunicati letti da {input_file}: {len(press_releases)}")
     print(f"Nuovi comunicati registrati nel piano: {newly_registered}")
+    print(f"Controlli arretrati saltati definitivamente: {skipped_checks}")
     print(f"Controlli Copyscape in scadenza oggi ({today.isoformat()}): {len(due_checks)}")
 
     if args.dry_run:
@@ -506,7 +515,6 @@ def main() -> int:
             state,
             due_checks,
             base_params,
-            max_attempts=max_attempts,
             log_path=log_path,
             all_result_rows=all_result_rows,
             unsaved_log_rows=unsaved_log_rows,

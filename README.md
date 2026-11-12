@@ -214,8 +214,7 @@ automaticamente con valori di default alla prima esecuzione):
     // chiave = campo "codice" per intero (non solo i primi caratteri) o
     // "id_hash" di uno specifico comunicato
     "PROINDGIU2026": [1, 3, 10, 30]
-  },
-  "max_attempts": 3
+  }
 }
 ```
 
@@ -230,14 +229,16 @@ Tiene traccia dell'avanzamento del piano: per ogni comunicato (chiave
 scadenze (`release_date`), il testo da analizzare (congelato al momento
 della registrazione, cosi' resta disponibile anche quando il comunicato non
 compare piu' nel feed RSS piu' recente) e lo stato di ciascun controllo
-pianificato (`pending`, `done`, `error`, `failed`).
+pianificato (`pending`, `done`, `skipped`, `failed`).
 
 #### Esecuzione
 
 Va eseguito periodicamente (ad es. una volta al giorno tramite Task
 Scheduler di Windows o cron): ad ogni esecuzione registra i nuovi
-comunicati nel piano ed esegue solo i controlli effettivamente in scadenza
-quel giorno.
+comunicati nel piano ed esegue solo i controlli previsti per quel giorno.
+I controlli pendenti dei giorni precedenti vengono segnati `skipped` e non
+vengono recuperati; un errore della chiamata viene segnato `failed` e non
+viene ritentato.
 
 ```powershell
 python .\copyscape_scheduler.py
@@ -248,17 +249,12 @@ Opzioni utili:
 - `--dry-run` per vedere quali comunicati verrebbero registrati e quali
   controlli risultano in scadenza, senza chiamare Copyscape ne' modificare
   lo stato
-- `--ignore-schedule` per eseguire subito tutti i controlli pianificati non
-  ancora completati, indipendentemente dalla data prevista (utile per test)
+- `--ignore-schedule` per eseguire subito tutti i controlli ancora pendenti
+  non scaduti, indipendentemente dalla data prevista (utile per test)
 - `--example-test` per usare il test ufficiale Copyscape (non addebitato)
 - `--config`, `--state`, `--input` per usare percorsi alternativi
 - `--filter filter.txt` per limitare i comunicati monitorati/controllati
   solo a quelli presenti nel file di filtro (si veda sotto)
-
-I controlli che falliscono (es. errore di rete o risposta di errore da
-Copyscape) vengono ritentati alle esecuzioni successive fino a
-`max_attempts` tentativi, dopodiche' passano allo stato `failed` e non
-vengono piu' ritentati.
 
 ### Filtro dei comunicati da monitorare — `filter.txt`
 
