@@ -5,3 +5,4 @@ https://www.istat.it/tag/poverta-relativa-e-assoluta/feed/
 https://www.istat.it/tag/natalita-e-fecondita/feed/
 https://www.istat.it/documenti/produzione-editoriale/feed/
 https://www.istat.it/tag/viaggi-e-vacanze/
+https://www.istat.it/tag/statistiche-today/
