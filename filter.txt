@@ -4,3 +4,4 @@ https://www.istat.it/produzione-editoriale/inflazione/, SD-INFL-2026-261013
 https://www.istat.it/comunicato-stampa/la-poverta-in-italia-anno-2025/, CS-POV-A2025-261015
 https://www.istat.it/comunicato-stampa/natalita-e-fecondita-della-popolazione-residente-anno-2025/, CS-NATFEC-A2025-261021
 https://www.istat.it/comunicato-stampa/prezzi-al-consumo-dati-provvisori-ottobre-2026/, CS-IPC-M202610-261030
+https://www.istat.it/comunicato-stampa/flussi-turistici-iii-trimestre-2026/, CS-TUR-T202603-261123
