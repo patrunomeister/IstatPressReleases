@@ -1353,16 +1353,17 @@
       {
         "offset_days": 26,
         "due_date": "2026-11-25",
-        "status": "pending",
+        "status": "skipped",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": null,
+        "skipped_at": "2026-11-26T17:14:10.441460"
       },
       {
         "offset_days": 27,
         "due_date": "2026-11-26",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-26T17:14:12.741900"
       },
       {
         "offset_days": 28,
