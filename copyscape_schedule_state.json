@@ -1368,9 +1368,9 @@
       {
         "offset_days": 28,
         "due_date": "2026-11-27",
-        "status": "pending",
+        "status": "done",
         "attempts": 0,
-        "executed_at": null
+        "executed_at": "2026-11-27T17:14:09.069017"
       },
       {
         "offset_days": 29,
